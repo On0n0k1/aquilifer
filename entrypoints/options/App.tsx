@@ -43,8 +43,8 @@ function App() {
     setSaving(true);
     try {
       if (form.type === 'anthropic') {
-        if (!form.apiKey.trim()) {
-          setError('API key is required.');
+        if (!form.apiKey.trim() || !form.model.trim()) {
+          setError('API key and model are required.');
           return;
         }
         await saveProvider({
@@ -52,6 +52,7 @@ function App() {
           type: 'anthropic',
           label: form.label.trim(),
           apiKey: form.apiKey.trim(),
+          model: form.model.trim(),
         });
       } else {
         if (!form.baseUrl.trim() || !form.model.trim()) {
@@ -112,11 +113,11 @@ function App() {
               <div>
                 <strong>{provider.label}</strong>
                 <span className="provider-type">{provider.type}</span>
-                {provider.type === 'openai-compatible' && (
-                  <div className="provider-detail">
-                    {provider.baseUrl} ({provider.model})
-                  </div>
-                )}
+                <div className="provider-detail">
+                  {provider.type === 'openai-compatible'
+                    ? `${provider.baseUrl} (${provider.model})`
+                    : provider.model}
+                </div>
               </div>
               <button onClick={() => handleDelete(provider.id)}>Remove</button>
             </li>
@@ -154,16 +155,28 @@ function App() {
           </label>
 
           {form.type === 'anthropic' ? (
-            <label>
-              API key
-              <input
-                type="password"
-                value={form.apiKey}
-                onChange={(event) =>
-                  setForm({ ...form, apiKey: event.target.value })
-                }
-              />
-            </label>
+            <>
+              <label>
+                Model
+                <input
+                  value={form.model}
+                  onChange={(event) =>
+                    setForm({ ...form, model: event.target.value })
+                  }
+                  placeholder="e.g. claude-sonnet-5"
+                />
+              </label>
+              <label>
+                API key
+                <input
+                  type="password"
+                  value={form.apiKey}
+                  onChange={(event) =>
+                    setForm({ ...form, apiKey: event.target.value })
+                  }
+                />
+              </label>
+            </>
           ) : (
             <>
               <label>

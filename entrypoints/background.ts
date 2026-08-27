@@ -3,6 +3,8 @@ import type {
   AquiliferResponsePayload,
 } from '../lib/aquilifer-protocol';
 import { isInternalMessage, type InternalMessage } from '../lib/internal-protocol';
+import { runChat } from '../lib/llm-clients';
+import { listProviders } from '../lib/providers';
 
 const CONNECTED_ORIGINS_KEY = 'connectedOrigins';
 
@@ -111,18 +113,33 @@ export default defineBackground(() => {
         persistConnectedOrigins();
         return { ok: true, result: { connected: false } };
 
-      case 'chat':
+      case 'chat': {
         if (!connectedOrigins.has(origin)) {
           return { ok: false, error: 'not_connected' };
         }
-        // Stub: proves the relay end-to-end. Real LLM call is a later step.
-        return {
-          ok: true,
-          result: {
-            message: `stub completion for origin ${origin}`,
-            echo: payload.params,
-          },
-        };
+        if (!payload.params?.messages?.length) {
+          return { ok: false, error: 'missing_messages' };
+        }
+
+        const providers = await listProviders();
+        const provider = payload.params.providerId
+          ? providers.find((p) => p.id === payload.params?.providerId)
+          : providers[0];
+
+        if (!provider) {
+          return { ok: false, error: 'no_provider_configured' };
+        }
+
+        try {
+          const result = await runChat(provider, payload.params);
+          return { ok: true, result: { message: result.text } };
+        } catch (error) {
+          return {
+            ok: false,
+            error: error instanceof Error ? error.message : 'chat_failed',
+          };
+        }
+      }
 
       default:
         return { ok: false, error: 'unknown_method' };

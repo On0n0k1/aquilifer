@@ -9,6 +9,7 @@ export interface AnthropicProvider {
   type: 'anthropic';
   label: string;
   apiKey: string;
+  model: string;
 }
 
 export interface OpenAICompatibleProvider {
