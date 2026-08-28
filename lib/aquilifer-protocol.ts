@@ -5,8 +5,6 @@ export type AquiliferMethod = 'connect' | 'disconnect' | 'chat' | 'getHistory';
 
 export interface AquiliferChatParams {
   messages: { role: 'user' | 'assistant' | 'system'; content: string }[];
-  /** Optional provider id hint; defaults to the first configured provider. */
-  providerId?: string;
 }
 
 export interface AquiliferRequestPayload {

@@ -4,12 +4,20 @@
 
 export const AQUILIFER_INTERNAL_KIND = 'aquilifer-internal';
 
-export interface ResolveConnectMessage {
-  kind: typeof AQUILIFER_INTERNAL_KIND;
-  type: 'resolveConnect';
-  origin: string;
-  approve: boolean;
-}
+export type ResolveConnectMessage =
+  | {
+      kind: typeof AQUILIFER_INTERNAL_KIND;
+      type: 'resolveConnect';
+      origin: string;
+      approve: true;
+      providerId: string;
+    }
+  | {
+      kind: typeof AQUILIFER_INTERNAL_KIND;
+      type: 'resolveConnect';
+      origin: string;
+      approve: false;
+    };
 
 export type InternalMessage = ResolveConnectMessage;
 

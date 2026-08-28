@@ -24,6 +24,7 @@ export interface OpenAICompatibleProvider {
 export type ProviderConfig = AnthropicProvider | OpenAICompatibleProvider;
 
 const PROVIDERS_KEY = 'providers';
+const DEFAULT_PROVIDER_KEY = 'defaultProviderId';
 
 export async function listProviders(): Promise<ProviderConfig[]> {
   const stored = await browser.storage.local.get(PROVIDERS_KEY);
@@ -36,6 +37,11 @@ export async function saveProvider(provider: ProviderConfig): Promise<void> {
   if (index >= 0) providers[index] = provider;
   else providers.push(provider);
   await browser.storage.local.set({ [PROVIDERS_KEY]: providers });
+
+  // The first provider ever added becomes the default automatically, so
+  // there's always a sensible one — the user can change it afterward.
+  const defaultId = await getDefaultProviderId();
+  if (!defaultId) await setDefaultProviderId(provider.id);
 }
 
 export async function deleteProvider(id: string): Promise<void> {
@@ -43,6 +49,19 @@ export async function deleteProvider(id: string): Promise<void> {
   await browser.storage.local.set({
     [PROVIDERS_KEY]: providers.filter((p) => p.id !== id),
   });
+
+  if ((await getDefaultProviderId()) === id) {
+    await browser.storage.local.remove(DEFAULT_PROVIDER_KEY);
+  }
+}
+
+export async function getDefaultProviderId(): Promise<string | undefined> {
+  const stored = await browser.storage.local.get(DEFAULT_PROVIDER_KEY);
+  return stored[DEFAULT_PROVIDER_KEY] as string | undefined;
+}
+
+export async function setDefaultProviderId(id: string): Promise<void> {
+  await browser.storage.local.set({ [DEFAULT_PROVIDER_KEY]: id });
 }
 
 /**

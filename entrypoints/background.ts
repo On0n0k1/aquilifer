@@ -5,12 +5,12 @@ import type {
 import { appendHistoryEntry, listHistoryForOrigin } from '../lib/history';
 import { isInternalMessage, type InternalMessage } from '../lib/internal-protocol';
 import { runChat } from '../lib/llm-clients';
-import { listProviders } from '../lib/providers';
-
-const CONNECTED_ORIGINS_KEY = 'connectedOrigins';
+import { listProviders, type ProviderConfig } from '../lib/providers';
+import { loadOriginGrants, saveOriginGrants } from '../lib/permissions';
 
 export default defineBackground(() => {
-  const connectedOrigins = new Set<string>();
+  // origin -> bound providerId, chosen by the user in the approval popup.
+  const originGrants = new Map<string, string>();
   const pendingApprovals = new Map<
     string,
     { resolve: (response: AquiliferResponsePayload) => void; windowId?: number }
@@ -20,18 +20,14 @@ export default defineBackground(() => {
   // Awaited at the top of handleRequest — the service worker can restart and
   // receive a message before this resolves, which would otherwise reject an
   // already-approved origin as not_connected.
-  const connectedOriginsLoaded = browser.storage.local
-    .get(CONNECTED_ORIGINS_KEY)
-    .then((stored) => {
-      const saved =
-        (stored[CONNECTED_ORIGINS_KEY] as string[] | undefined) ?? [];
-      saved.forEach((origin) => connectedOrigins.add(origin));
-    });
+  const originGrantsLoaded = loadOriginGrants().then((grants) => {
+    for (const [origin, providerId] of Object.entries(grants)) {
+      originGrants.set(origin, providerId);
+    }
+  });
 
-  function persistConnectedOrigins() {
-    browser.storage.local.set({
-      [CONNECTED_ORIGINS_KEY]: [...connectedOrigins],
-    });
+  function persistOriginGrants() {
+    saveOriginGrants(Object.fromEntries(originGrants));
   }
 
   browser.runtime.onMessage.addListener((message, sender) => {
@@ -69,8 +65,8 @@ export default defineBackground(() => {
         }
 
         if (message.approve) {
-          connectedOrigins.add(message.origin);
-          persistConnectedOrigins();
+          originGrants.set(message.origin, message.providerId);
+          persistOriginGrants();
           pending.resolve({ ok: true, result: { connected: true } });
         } else {
           pending.resolve({ ok: false, error: 'connect_denied' });
@@ -80,16 +76,37 @@ export default defineBackground(() => {
     return { ok: true };
   }
 
+  /**
+   * Looks up the provider bound to `origin`'s grant. If the grant points at a
+   * provider that no longer exists (deleted since the site connected), the
+   * stale grant is cleared here so the origin goes back to "not connected"
+   * instead of silently failing every future request.
+   */
+  async function resolveBoundProvider(
+    origin: string,
+  ): Promise<ProviderConfig | undefined> {
+    const boundProviderId = originGrants.get(origin);
+    if (!boundProviderId) return undefined;
+
+    const providers = await listProviders();
+    const provider = providers.find((p) => p.id === boundProviderId);
+    if (!provider) {
+      originGrants.delete(origin);
+      persistOriginGrants();
+    }
+    return provider;
+  }
+
   async function handleRequest(
     payload: AquiliferRequestPayload,
     origin: string | undefined,
   ): Promise<AquiliferResponsePayload> {
     if (!origin) return { ok: false, error: 'unknown_origin' };
-    await connectedOriginsLoaded;
+    await originGrantsLoaded;
 
     switch (payload.method) {
       case 'connect': {
-        if (connectedOrigins.has(origin)) {
+        if (await resolveBoundProvider(origin)) {
           return { ok: true, result: { connected: true } };
         }
         if (pendingApprovals.has(origin)) {
@@ -105,7 +122,7 @@ export default defineBackground(() => {
               ),
               type: 'popup',
               width: 380,
-              height: 280,
+              height: 320,
             })
             .then((win) => {
               if (win?.id == null) return;
@@ -117,25 +134,17 @@ export default defineBackground(() => {
       }
 
       case 'disconnect':
-        connectedOrigins.delete(origin);
-        persistConnectedOrigins();
+        originGrants.delete(origin);
+        persistOriginGrants();
         return { ok: true, result: { connected: false } };
 
       case 'chat': {
-        if (!connectedOrigins.has(origin)) {
+        const provider = await resolveBoundProvider(origin);
+        if (!provider) {
           return { ok: false, error: 'not_connected' };
         }
         if (!payload.params?.messages?.length) {
           return { ok: false, error: 'missing_messages' };
-        }
-
-        const providers = await listProviders();
-        const provider = payload.params.providerId
-          ? providers.find((p) => p.id === payload.params?.providerId)
-          : providers[0];
-
-        if (!provider) {
-          return { ok: false, error: 'no_provider_configured' };
         }
 
         try {
@@ -167,7 +176,7 @@ export default defineBackground(() => {
       }
 
       case 'getHistory': {
-        if (!connectedOrigins.has(origin)) {
+        if (!originGrants.has(origin)) {
           return { ok: false, error: 'not_connected' };
         }
         const entries = await listHistoryForOrigin(origin);

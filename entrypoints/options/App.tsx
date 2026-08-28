@@ -2,9 +2,11 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { clearHistory, listHistory, type HistoryEntry } from '../../lib/history';
 import {
   deleteProvider,
+  getDefaultProviderId,
   listProviders,
   originPatternForUrl,
   saveProvider,
+  setDefaultProviderId,
   type ProviderConfig,
   type ProviderType,
 } from '../../lib/providers';
@@ -24,6 +26,9 @@ function emptyForm(): FormState {
 
 function App() {
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
+  const [defaultProviderId, setDefaultProviderIdState] = useState<
+    string | undefined
+  >();
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +37,13 @@ function App() {
   useEffect(() => {
     listProviders().then(setProviders);
     listHistory().then(setHistory);
+    getDefaultProviderId().then(setDefaultProviderIdState);
   }, []);
+
+  async function handleSetDefault(id: string) {
+    await setDefaultProviderId(id);
+    setDefaultProviderIdState(id);
+  }
 
   async function handleClearHistory() {
     await clearHistory();
@@ -98,6 +109,7 @@ function App() {
 
       setForm(emptyForm());
       setProviders(await listProviders());
+      setDefaultProviderIdState(await getDefaultProviderId());
     } finally {
       setSaving(false);
     }
@@ -106,6 +118,7 @@ function App() {
   async function handleDelete(id: string) {
     await deleteProvider(id);
     setProviders(await listProviders());
+    setDefaultProviderIdState(await getDefaultProviderId());
   }
 
   return (
@@ -116,20 +129,33 @@ function App() {
         <h2>Providers</h2>
         {providers.length === 0 && <p>No providers configured yet.</p>}
         <ul className="provider-list">
-          {providers.map((provider) => (
-            <li key={provider.id}>
-              <div>
-                <strong>{provider.label}</strong>
-                <span className="provider-type">{provider.type}</span>
-                <div className="provider-detail">
-                  {provider.type === 'openai-compatible'
-                    ? `${provider.baseUrl} (${provider.model})`
-                    : provider.model}
+          {providers.map((provider) => {
+            const isDefault = provider.id === defaultProviderId;
+            return (
+              <li key={provider.id}>
+                <div>
+                  <strong>{provider.label}</strong>
+                  <span className="provider-type">{provider.type}</span>
+                  {isDefault && <span className="provider-default">default</span>}
+                  <div className="provider-detail">
+                    {provider.type === 'openai-compatible'
+                      ? `${provider.baseUrl} (${provider.model})`
+                      : provider.model}
+                  </div>
                 </div>
-              </div>
-              <button onClick={() => handleDelete(provider.id)}>Remove</button>
-            </li>
-          ))}
+                <div className="provider-actions">
+                  {!isDefault && (
+                    <button onClick={() => handleSetDefault(provider.id)}>
+                      Set default
+                    </button>
+                  )}
+                  <button onClick={() => handleDelete(provider.id)}>
+                    Remove
+                  </button>
+                </div>
+              </li>
+            );
+          })}
         </ul>
       </section>
 
