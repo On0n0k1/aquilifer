@@ -1,7 +1,7 @@
 export const AQUILIFER_PAGE_SOURCE = 'aquilifer-page';
 export const AQUILIFER_CONTENT_SOURCE = 'aquilifer-content';
 
-export type AquiliferMethod = 'connect' | 'disconnect' | 'chat';
+export type AquiliferMethod = 'connect' | 'disconnect' | 'chat' | 'getHistory';
 
 export interface AquiliferChatParams {
   messages: { role: 'user' | 'assistant' | 'system'; content: string }[];

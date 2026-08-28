@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { clearHistory, listHistory, type HistoryEntry } from '../../lib/history';
 import {
   deleteProvider,
   listProviders,
@@ -23,13 +24,20 @@ function emptyForm(): FormState {
 
 function App() {
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
+  const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     listProviders().then(setProviders);
+    listHistory().then(setHistory);
   }, []);
+
+  async function handleClearHistory() {
+    await clearHistory();
+    setHistory(await listHistory());
+  }
 
   async function handleSave(event: FormEvent) {
     event.preventDefault();
@@ -122,6 +130,44 @@ function App() {
               <button onClick={() => handleDelete(provider.id)}>Remove</button>
             </li>
           ))}
+        </ul>
+      </section>
+
+      <section>
+        <div className="section-header">
+          <h2>History</h2>
+          {history.length > 0 && (
+            <button onClick={handleClearHistory}>Clear all</button>
+          )}
+        </div>
+        {history.length === 0 && <p>No requests yet.</p>}
+        <ul className="history-list">
+          {[...history]
+            .sort((a, b) => b.timestamp - a.timestamp)
+            .map((entry) => {
+              const lastMessage = entry.messages[entry.messages.length - 1];
+              return (
+                <li key={entry.id}>
+                  <div className="history-meta">
+                    <strong>{entry.origin}</strong>
+                    <span>{new Date(entry.timestamp).toLocaleString()}</span>
+                    <span>{entry.providerLabel}</span>
+                  </div>
+                  {lastMessage && (
+                    <div className="history-prompt">
+                      {lastMessage.role}: {lastMessage.content}
+                    </div>
+                  )}
+                  <div
+                    className={
+                      entry.outcome.ok ? 'history-result' : 'history-error'
+                    }
+                  >
+                    {entry.outcome.ok ? entry.outcome.message : entry.outcome.error}
+                  </div>
+                </li>
+              );
+            })}
         </ul>
       </section>
 

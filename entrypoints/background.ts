@@ -2,6 +2,7 @@ import type {
   AquiliferRequestPayload,
   AquiliferResponsePayload,
 } from '../lib/aquilifer-protocol';
+import { appendHistoryEntry, listHistoryForOrigin } from '../lib/history';
 import { isInternalMessage, type InternalMessage } from '../lib/internal-protocol';
 import { runChat } from '../lib/llm-clients';
 import { listProviders } from '../lib/providers';
@@ -16,10 +17,16 @@ export default defineBackground(() => {
   >();
   const windowIdToOrigin = new Map<number, string>();
 
-  browser.storage.local.get(CONNECTED_ORIGINS_KEY).then((stored) => {
-    const saved = (stored[CONNECTED_ORIGINS_KEY] as string[] | undefined) ?? [];
-    saved.forEach((origin) => connectedOrigins.add(origin));
-  });
+  // Awaited at the top of handleRequest — the service worker can restart and
+  // receive a message before this resolves, which would otherwise reject an
+  // already-approved origin as not_connected.
+  const connectedOriginsLoaded = browser.storage.local
+    .get(CONNECTED_ORIGINS_KEY)
+    .then((stored) => {
+      const saved =
+        (stored[CONNECTED_ORIGINS_KEY] as string[] | undefined) ?? [];
+      saved.forEach((origin) => connectedOrigins.add(origin));
+    });
 
   function persistConnectedOrigins() {
     browser.storage.local.set({
@@ -78,6 +85,7 @@ export default defineBackground(() => {
     origin: string | undefined,
   ): Promise<AquiliferResponsePayload> {
     if (!origin) return { ok: false, error: 'unknown_origin' };
+    await connectedOriginsLoaded;
 
     switch (payload.method) {
       case 'connect': {
@@ -132,13 +140,38 @@ export default defineBackground(() => {
 
         try {
           const result = await runChat(provider, payload.params);
+          await appendHistoryEntry({
+            id: crypto.randomUUID(),
+            origin,
+            timestamp: Date.now(),
+            providerId: provider.id,
+            providerLabel: provider.label,
+            messages: payload.params.messages,
+            outcome: { ok: true, message: result.text },
+          });
           return { ok: true, result: { message: result.text } };
         } catch (error) {
-          return {
-            ok: false,
-            error: error instanceof Error ? error.message : 'chat_failed',
-          };
+          const errorMessage =
+            error instanceof Error ? error.message : 'chat_failed';
+          await appendHistoryEntry({
+            id: crypto.randomUUID(),
+            origin,
+            timestamp: Date.now(),
+            providerId: provider.id,
+            providerLabel: provider.label,
+            messages: payload.params.messages,
+            outcome: { ok: false, error: errorMessage },
+          });
+          return { ok: false, error: errorMessage };
         }
+      }
+
+      case 'getHistory': {
+        if (!connectedOrigins.has(origin)) {
+          return { ok: false, error: 'not_connected' };
+        }
+        const entries = await listHistoryForOrigin(origin);
+        return { ok: true, result: entries };
       }
 
       default:
