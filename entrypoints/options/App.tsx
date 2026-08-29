@@ -10,7 +10,18 @@ import {
   type ProviderConfig,
   type ProviderType,
 } from '../../lib/providers';
+import {
+  DEFAULT_RATE_LIMIT_SETTINGS,
+  getRateLimitSettings,
+  setRateLimitSettings,
+  type RateLimitSettings,
+} from '../../lib/rate-limits';
 import './style.css';
+
+const WARNING_LABELS: Record<string, string> = {
+  large_request: 'large request',
+  rate_limited: 'rate limited',
+};
 
 interface FormState {
   type: ProviderType;
@@ -33,12 +44,24 @@ function App() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [rateLimits, setRateLimits] = useState<RateLimitSettings>(
+    DEFAULT_RATE_LIMIT_SETTINGS,
+  );
+  const [rateLimitsSaved, setRateLimitsSaved] = useState(false);
 
   useEffect(() => {
     listProviders().then(setProviders);
     listHistory().then(setHistory);
     getDefaultProviderId().then(setDefaultProviderIdState);
+    getRateLimitSettings().then(setRateLimits);
   }, []);
+
+  async function handleSaveRateLimits(event: FormEvent) {
+    event.preventDefault();
+    await setRateLimitSettings(rateLimits);
+    setRateLimitsSaved(true);
+    setTimeout(() => setRateLimitsSaved(false), 2000);
+  }
 
   async function handleSetDefault(id: string) {
     await setDefaultProviderId(id);
@@ -160,6 +183,86 @@ function App() {
       </section>
 
       <section>
+        <h2>Rate limiting</h2>
+        <form onSubmit={handleSaveRateLimits}>
+          <label>
+            Max requests per origin
+            <input
+              type="number"
+              min={1}
+              value={rateLimits.frequencyThreshold}
+              onChange={(event) =>
+                setRateLimits({
+                  ...rateLimits,
+                  frequencyThreshold: Number(event.target.value),
+                })
+              }
+            />
+          </label>
+          <label>
+            Per window (minutes)
+            <input
+              type="number"
+              min={1}
+              value={rateLimits.frequencyWindowMinutes}
+              onChange={(event) =>
+                setRateLimits({
+                  ...rateLimits,
+                  frequencyWindowMinutes: Number(event.target.value),
+                })
+              }
+            />
+          </label>
+          <label>
+            Large-request warning threshold (characters)
+            <input
+              type="number"
+              min={1}
+              value={rateLimits.sizeThresholdChars}
+              onChange={(event) =>
+                setRateLimits({
+                  ...rateLimits,
+                  sizeThresholdChars: Number(event.target.value),
+                })
+              }
+            />
+          </label>
+
+          <label className="checkbox-option">
+            <input
+              type="checkbox"
+              checked={rateLimits.notifyOnBlock}
+              onChange={(event) =>
+                setRateLimits({
+                  ...rateLimits,
+                  notifyOnBlock: event.target.checked,
+                })
+              }
+            />
+            Turn on notification
+          </label>
+
+          <label className="checkbox-option">
+            <input
+              type="checkbox"
+              checked={rateLimits.showPopupOnBlock}
+              onChange={(event) =>
+                setRateLimits({
+                  ...rateLimits,
+                  showPopupOnBlock: event.target.checked,
+                })
+              }
+            />
+            Show popup
+          </label>
+
+          <button type="submit">
+            {rateLimitsSaved ? 'Saved' : 'Save limits'}
+          </button>
+        </form>
+      </section>
+
+      <section>
         <div className="section-header">
           <h2>History</h2>
           {history.length > 0 && (
@@ -179,6 +282,15 @@ function App() {
                     <span>{new Date(entry.timestamp).toLocaleString()}</span>
                     <span>{entry.providerLabel}</span>
                   </div>
+                  {entry.warnings && entry.warnings.length > 0 && (
+                    <div className="history-warnings">
+                      {entry.warnings.map((warning) => (
+                        <span key={warning} className="warning-tag">
+                          ⚠ {WARNING_LABELS[warning] ?? warning}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {lastMessage && (
                     <div className="history-prompt">
                       {lastMessage.role}: {lastMessage.content}
@@ -222,7 +334,7 @@ function App() {
               onChange={(event) =>
                 setForm({ ...form, label: event.target.value })
               }
-              placeholder="e.g. My Anthropic key"
+              placeholder="e.g. Claude home"
             />
           </label>
 
