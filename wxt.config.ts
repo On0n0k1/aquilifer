@@ -4,7 +4,7 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
-    permissions: ['storage'],
+    permissions: ['storage', 'notifications'],
     // Anthropic's host is known ahead of time, so it's granted up front.
     // Self-hosted/local provider URLs are arbitrary and unknown until the
     // user adds one, so they go through optional_host_permissions +

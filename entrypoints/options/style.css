@@ -172,3 +172,28 @@ button:disabled {
   font-size: 13px;
   margin: 0;
 }
+
+.history-warnings {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.warning-tag {
+  font-size: 11px;
+  color: #92400e;
+  background: #fef3c7;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.checkbox-option {
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+}
+
+.checkbox-option input {
+  width: auto;
+  padding: 0;
+}

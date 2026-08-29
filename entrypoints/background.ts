@@ -1,12 +1,18 @@
 import type {
+  AquiliferChatParams,
   AquiliferRequestPayload,
   AquiliferResponsePayload,
 } from '../lib/aquilifer-protocol';
-import { appendHistoryEntry, listHistoryForOrigin } from '../lib/history';
+import {
+  appendHistoryEntry,
+  countRecentEntries,
+  listHistoryForOrigin,
+} from '../lib/history';
 import { isInternalMessage, type InternalMessage } from '../lib/internal-protocol';
 import { runChat } from '../lib/llm-clients';
 import { listProviders, type ProviderConfig } from '../lib/providers';
 import { loadOriginGrants, saveOriginGrants } from '../lib/permissions';
+import { getRateLimitSettings } from '../lib/rate-limits';
 
 export default defineBackground(() => {
   // origin -> bound providerId, chosen by the user in the approval popup.
@@ -97,6 +103,58 @@ export default defineBackground(() => {
     return provider;
   }
 
+  /**
+   * Size crossing its threshold is a non-blocking warning; frequency
+   * crossing its threshold blocks the request (SPEC §4, §6). The frequency
+   * count is based on existing history entries, so it costs no extra state.
+   */
+  async function checkRateLimit(
+    origin: string,
+    params: AquiliferChatParams,
+  ): Promise<{ warnings: string[]; blocked: boolean }> {
+    const settings = await getRateLimitSettings();
+    const warnings: string[] = [];
+
+    const totalChars = params.messages.reduce(
+      (sum, message) => sum + message.content.length,
+      0,
+    );
+    if (totalChars > settings.sizeThresholdChars) {
+      warnings.push('large_request');
+    }
+
+    const windowMs = settings.frequencyWindowMinutes * 60_000;
+    const recentCount = await countRecentEntries(origin, windowMs);
+    const blocked = recentCount >= settings.frequencyThreshold;
+    if (blocked) warnings.push('rate_limited');
+
+    return { warnings, blocked };
+  }
+
+  async function handleBlocked(origin: string) {
+    const settings = await getRateLimitSettings();
+
+    if (settings.notifyOnBlock) {
+      browser.notifications.create({
+        type: 'basic',
+        iconUrl: browser.runtime.getURL('/icon/128.png'),
+        title: 'Aquilifer: request blocked',
+        message: `${origin} hit the rate limit (${settings.frequencyThreshold} requests / ${settings.frequencyWindowMinutes} min) and was blocked.`,
+      });
+    }
+
+    if (settings.showPopupOnBlock) {
+      browser.windows.create({
+        url: browser.runtime.getURL(
+          `/blocked.html?origin=${encodeURIComponent(origin)}`,
+        ),
+        type: 'popup',
+        width: 360,
+        height: 260,
+      });
+    }
+  }
+
   async function handleRequest(
     payload: AquiliferRequestPayload,
     origin: string | undefined,
@@ -147,6 +205,26 @@ export default defineBackground(() => {
           return { ok: false, error: 'missing_messages' };
         }
 
+        const { warnings, blocked } = await checkRateLimit(
+          origin,
+          payload.params,
+        );
+
+        if (blocked) {
+          await appendHistoryEntry({
+            id: crypto.randomUUID(),
+            origin,
+            timestamp: Date.now(),
+            providerId: provider.id,
+            providerLabel: provider.label,
+            messages: payload.params.messages,
+            outcome: { ok: false, error: 'rate_limited' },
+            warnings,
+          });
+          await handleBlocked(origin);
+          return { ok: false, error: 'rate_limited' };
+        }
+
         try {
           const result = await runChat(provider, payload.params);
           await appendHistoryEntry({
@@ -157,6 +235,7 @@ export default defineBackground(() => {
             providerLabel: provider.label,
             messages: payload.params.messages,
             outcome: { ok: true, message: result.text },
+            warnings,
           });
           return { ok: true, result: { message: result.text } };
         } catch (error) {
@@ -170,6 +249,7 @@ export default defineBackground(() => {
             providerLabel: provider.label,
             messages: payload.params.messages,
             outcome: { ok: false, error: errorMessage },
+            warnings,
           });
           return { ok: false, error: errorMessage };
         }

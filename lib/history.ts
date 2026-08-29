@@ -13,6 +13,8 @@ export interface HistoryEntry {
   providerLabel: string;
   messages: AquiliferChatParams['messages'];
   outcome: { ok: true; message: string } | { ok: false; error: string };
+  /** Non-fatal flags, e.g. 'large_request', or 'rate_limited' on a block. */
+  warnings?: string[];
 }
 
 const HISTORY_KEY = 'history';
@@ -28,6 +30,16 @@ export async function listHistoryForOrigin(
 ): Promise<HistoryEntry[]> {
   const all = await listHistory();
   return all.filter((entry) => entry.origin === origin);
+}
+
+/** Count of chat attempts (any outcome) for `origin` within the last `windowMs`. */
+export async function countRecentEntries(
+  origin: string,
+  windowMs: number,
+): Promise<number> {
+  const entries = await listHistoryForOrigin(origin);
+  const cutoff = Date.now() - windowMs;
+  return entries.filter((entry) => entry.timestamp >= cutoff).length;
 }
 
 export async function appendHistoryEntry(entry: HistoryEntry): Promise<void> {
