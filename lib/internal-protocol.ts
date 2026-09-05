@@ -19,7 +19,13 @@ export type ResolveConnectMessage =
       approve: false;
     };
 
-export type InternalMessage = ResolveConnectMessage;
+export interface RevokeOriginMessage {
+  kind: typeof AQUILIFER_INTERNAL_KIND;
+  type: 'revokeOrigin';
+  origin: string;
+}
+
+export type InternalMessage = ResolveConnectMessage | RevokeOriginMessage;
 
 export function isInternalMessage(message: unknown): message is InternalMessage {
   return (

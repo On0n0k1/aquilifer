@@ -79,6 +79,12 @@ export default defineBackground(() => {
         }
       }
     }
+
+    if (message.type === 'revokeOrigin') {
+      originGrants.delete(message.origin);
+      persistOriginGrants();
+    }
+
     return { ok: true };
   }
 

@@ -1,3 +1,4 @@
+import ConnectedSitesSection from './ConnectedSitesSection';
 import HistorySection from './HistorySection';
 import ProvidersSection from './ProvidersSection';
 import RateLimitsSection from './RateLimitsSection';
@@ -8,6 +9,7 @@ function App() {
     <main>
       <h1>Aquilifer settings</h1>
       <ProvidersSection />
+      <ConnectedSitesSection />
       <RateLimitsSection />
       <HistorySection />
     </main>
