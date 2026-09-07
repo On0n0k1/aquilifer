@@ -1,7 +1,9 @@
 // Raw-fetch client for the generic OpenAI-compatible provider type (SPEC
 // §3) — covers OpenAI itself, and self-hosted/local backends like llama.cpp,
-// Ollama, LM Studio, vLLM. Used only from the background service worker —
-// this is where the credential gets attached.
+// Ollama, LM Studio, vLLM. Called from the background service worker for
+// real chat requests, and from the options page to verify a provider before
+// saving it — never from the content script or injected script, which never
+// see the credential.
 
 import type { AquiliferChatParams } from '../aquilifer-protocol';
 import type { OpenAICompatibleProvider } from '../providers';
@@ -31,7 +33,8 @@ export async function callOpenAICompatible(
 
   const data = (await response.json()) as {
     choices?: { message?: { content?: string } }[];
+    model?: string;
   };
 
-  return { text: data.choices?.[0]?.message?.content ?? '' };
+  return { text: data.choices?.[0]?.message?.content ?? '', model: data.model };
 }

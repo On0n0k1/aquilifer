@@ -1,4 +1,5 @@
 import { useEffect, useState, type FormEvent } from 'react';
+import { runChat } from '../../lib/llm-clients';
 import {
   deleteProvider,
   getDefaultProviderId,
@@ -9,6 +10,15 @@ import {
   type ProviderConfig,
   type ProviderType,
 } from '../../lib/providers';
+
+const VERIFICATION_MESSAGE = 'Reply with only the word OK.';
+
+const ANTHROPIC_MODELS = [
+  { id: 'claude-opus-5', label: 'Claude Opus 5' },
+  { id: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
+  { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
+];
+const OTHER_MODEL = '__other__';
 
 interface FormState {
   type: ProviderType;
@@ -29,7 +39,8 @@ function ProvidersSection() {
   >();
   const [form, setForm] = useState<FormState>(emptyForm);
   const [error, setError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
+  const [phase, setPhase] = useState<'idle' | 'testing' | 'saving'>('idle');
+  const [useCustomModel, setUseCustomModel] = useState(false);
 
   useEffect(() => {
     listProviders().then(setProviders);
@@ -56,20 +67,21 @@ function ProvidersSection() {
       return;
     }
 
-    setSaving(true);
     try {
+      let candidate: ProviderConfig;
+
       if (form.type === 'anthropic') {
         if (!form.apiKey.trim() || !form.model.trim()) {
           setError('API key and model are required.');
           return;
         }
-        await saveProvider({
+        candidate = {
           id: crypto.randomUUID(),
           type: 'anthropic',
           label: form.label.trim(),
           apiKey: form.apiKey.trim(),
           model: form.model.trim(),
-        });
+        };
       } else {
         if (!form.baseUrl.trim() || !form.model.trim()) {
           setError('Base URL and model are required.');
@@ -84,6 +96,7 @@ function ProvidersSection() {
           return;
         }
 
+        setPhase('saving');
         // Must run inside this click handler's user gesture — the browser
         // ties permissions.request() to the transient activation from Save.
         const granted = await browser.permissions.request({
@@ -94,21 +107,44 @@ function ProvidersSection() {
           return;
         }
 
-        await saveProvider({
+        candidate = {
           id: crypto.randomUUID(),
           type: 'openai-compatible',
           label: form.label.trim(),
           baseUrl: form.baseUrl.trim(),
           apiKey: form.apiKey.trim() || undefined,
           model: form.model.trim(),
-        });
+        };
       }
 
+      // A provider is only ever persisted once a real chat call against it
+      // succeeds — this both proves the credential/URL work and gives us
+      // the model name/version the provider itself reports, which is what
+      // getProvider (once built) will expose to websites, never `label`.
+      setPhase('testing');
+      try {
+        const result = await runChat(candidate, {
+          messages: [{ role: 'user', content: VERIFICATION_MESSAGE }],
+        });
+        candidate.resolvedModel = result.model;
+      } catch (testError) {
+        setError(
+          `Connection test failed: ${
+            testError instanceof Error ? testError.message : 'unknown error'
+          }`,
+        );
+        return;
+      }
+
+      setPhase('saving');
+      await saveProvider(candidate);
+
       setForm(emptyForm());
+      setUseCustomModel(false);
       setProviders(await listProviders());
       setDefaultProviderIdState(await getDefaultProviderId());
     } finally {
-      setSaving(false);
+      setPhase('idle');
     }
   }
 
@@ -130,8 +166,8 @@ function ProvidersSection() {
                   )}
                   <div className="provider-detail">
                     {provider.type === 'openai-compatible'
-                      ? `${provider.baseUrl} (${provider.model})`
-                      : provider.model}
+                      ? `${provider.baseUrl} (${provider.resolvedModel ?? provider.model})`
+                      : (provider.resolvedModel ?? provider.model)}
                   </div>
                 </div>
                 <div className="provider-actions">
@@ -183,14 +219,42 @@ function ProvidersSection() {
             <>
               <label>
                 Model
-                <input
-                  value={form.model}
-                  onChange={(event) =>
-                    setForm({ ...form, model: event.target.value })
-                  }
-                  placeholder="e.g. claude-sonnet-5"
-                />
+                <select
+                  value={useCustomModel ? OTHER_MODEL : form.model}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (value === OTHER_MODEL) {
+                      setUseCustomModel(true);
+                      setForm({ ...form, model: '' });
+                    } else {
+                      setUseCustomModel(false);
+                      setForm({ ...form, model: value });
+                    }
+                  }}
+                >
+                  <option value="" disabled>
+                    Select a model
+                  </option>
+                  {ANTHROPIC_MODELS.map((model) => (
+                    <option key={model.id} value={model.id}>
+                      {model.label}
+                    </option>
+                  ))}
+                  <option value={OTHER_MODEL}>Other (enter manually)</option>
+                </select>
               </label>
+              {useCustomModel && (
+                <label>
+                  Custom model ID
+                  <input
+                    value={form.model}
+                    onChange={(event) =>
+                      setForm({ ...form, model: event.target.value })
+                    }
+                    placeholder="e.g. claude-opus-4-5"
+                  />
+                </label>
+              )}
               <label>
                 API key
                 <input
@@ -239,8 +303,12 @@ function ProvidersSection() {
 
           {error && <p className="error">{error}</p>}
 
-          <button type="submit" disabled={saving}>
-            {saving ? 'Saving…' : 'Save provider'}
+          <button type="submit" disabled={phase !== 'idle'}>
+            {phase === 'testing'
+              ? 'Testing connection…'
+              : phase === 'saving'
+                ? 'Saving…'
+                : 'Save provider'}
           </button>
         </form>
       </section>

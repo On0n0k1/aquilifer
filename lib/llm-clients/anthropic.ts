@@ -1,6 +1,7 @@
-// Raw-fetch client for the Anthropic-native provider type (SPEC §3). Used
-// only from the background service worker — this is where the credential
-// gets attached.
+// Raw-fetch client for the Anthropic-native provider type (SPEC §3). Called
+// from the background service worker for real chat requests, and from the
+// options page to verify a provider before saving it — never from the
+// content script or injected script, which never see the credential.
 
 import type { AquiliferChatParams } from '../aquilifer-protocol';
 import type { AnthropicProvider } from '../providers';
@@ -28,6 +29,12 @@ export async function callAnthropic(
       'content-type': 'application/json',
       'x-api-key': provider.apiKey,
       'anthropic-version': ANTHROPIC_API_VERSION,
+      // Anthropic requires this explicit acknowledgment for any request
+      // carrying a browser-style Origin header (which every fetch() from an
+      // extension context does, background service worker included) — the
+      // sanctioned opt-in for calling the API directly from a browser
+      // extension with the user's own key, rather than through a backend.
+      'anthropic-dangerous-direct-browser-access': 'true',
     },
     body: JSON.stringify({
       model: provider.model,
@@ -41,11 +48,12 @@ export async function callAnthropic(
 
   const data = (await response.json()) as {
     content?: { type: string; text?: string }[];
+    model?: string;
   };
   const text = (data.content ?? [])
     .filter((block) => block.type === 'text' && block.text)
     .map((block) => block.text)
     .join('');
 
-  return { text };
+  return { text, model: data.model };
 }

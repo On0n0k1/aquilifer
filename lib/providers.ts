@@ -10,6 +10,9 @@ export interface AnthropicProvider {
   label: string;
   apiKey: string;
   model: string;
+  /** Model reported by the provider's own response during the save-time
+   *  verification call — what's exposed to websites, never `label`. */
+  resolvedModel?: string;
 }
 
 export interface OpenAICompatibleProvider {
@@ -19,6 +22,9 @@ export interface OpenAICompatibleProvider {
   baseUrl: string;
   apiKey?: string;
   model: string;
+  /** Model reported by the provider's own response during the save-time
+   *  verification call — what's exposed to websites, never `label`. */
+  resolvedModel?: string;
 }
 
 export type ProviderConfig = AnthropicProvider | OpenAICompatibleProvider;
