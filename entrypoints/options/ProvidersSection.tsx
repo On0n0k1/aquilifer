@@ -13,11 +13,27 @@ import {
 
 const VERIFICATION_MESSAGE = 'Reply with only the word OK.';
 
-const ANTHROPIC_MODELS = [
-  { id: 'claude-opus-5', label: 'Claude Opus 5' },
-  { id: 'claude-sonnet-5', label: 'Claude Sonnet 5' },
-  { id: 'claude-haiku-4-5', label: 'Claude Haiku 4.5' },
-];
+interface ModelVersion {
+  id: string;
+  label: string;
+}
+
+// Current as of this writing — Anthropic ships new versions over time, so
+// this list needs occasional manual updates; "Other" always covers the gap.
+const ANTHROPIC_MODEL_FAMILIES: Record<string, ModelVersion[]> = {
+  Opus: [
+    { id: 'claude-opus-5', label: 'Opus 5' },
+    { id: 'claude-opus-4-8', label: 'Opus 4.8' },
+    { id: 'claude-opus-4-7', label: 'Opus 4.7' },
+    { id: 'claude-opus-4-6', label: 'Opus 4.6' },
+  ],
+  Sonnet: [
+    { id: 'claude-sonnet-5', label: 'Sonnet 5' },
+    { id: 'claude-sonnet-4-6', label: 'Sonnet 4.6' },
+  ],
+  Haiku: [{ id: 'claude-haiku-4-5', label: 'Haiku 4.5' }],
+  Fable: [{ id: 'claude-fable-5', label: 'Fable 5' }],
+};
 const OTHER_MODEL = '__other__';
 
 interface FormState {
@@ -41,6 +57,7 @@ function ProvidersSection() {
   const [error, setError] = useState<string | null>(null);
   const [phase, setPhase] = useState<'idle' | 'testing' | 'saving'>('idle');
   const [useCustomModel, setUseCustomModel] = useState(false);
+  const [modelFamily, setModelFamily] = useState('');
 
   useEffect(() => {
     listProviders().then(setProviders);
@@ -141,6 +158,7 @@ function ProvidersSection() {
 
       setForm(emptyForm());
       setUseCustomModel(false);
+      setModelFamily('');
       setProviders(await listProviders());
       setDefaultProviderIdState(await getDefaultProviderId());
     } finally {
@@ -218,31 +236,52 @@ function ProvidersSection() {
           {form.type === 'anthropic' ? (
             <>
               <label>
-                Model
+                Model family
                 <select
-                  value={useCustomModel ? OTHER_MODEL : form.model}
+                  value={useCustomModel ? OTHER_MODEL : modelFamily}
                   onChange={(event) => {
                     const value = event.target.value;
-                    if (value === OTHER_MODEL) {
+                    const defaultVersion = ANTHROPIC_MODEL_FAMILIES[value]?.[0];
+                    if (value === OTHER_MODEL || !defaultVersion) {
                       setUseCustomModel(true);
+                      setModelFamily('');
                       setForm({ ...form, model: '' });
                     } else {
                       setUseCustomModel(false);
-                      setForm({ ...form, model: value });
+                      setModelFamily(value);
+                      // Default to that family's newest version.
+                      setForm({ ...form, model: defaultVersion.id });
                     }
                   }}
                 >
                   <option value="" disabled>
-                    Select a model
+                    Select a family
                   </option>
-                  {ANTHROPIC_MODELS.map((model) => (
-                    <option key={model.id} value={model.id}>
-                      {model.label}
+                  {Object.keys(ANTHROPIC_MODEL_FAMILIES).map((family) => (
+                    <option key={family} value={family}>
+                      {family}
                     </option>
                   ))}
                   <option value={OTHER_MODEL}>Other (enter manually)</option>
                 </select>
               </label>
+              {!useCustomModel && modelFamily && (
+                <label>
+                  Version
+                  <select
+                    value={form.model}
+                    onChange={(event) =>
+                      setForm({ ...form, model: event.target.value })
+                    }
+                  >
+                    {(ANTHROPIC_MODEL_FAMILIES[modelFamily] ?? []).map((version) => (
+                      <option key={version.id} value={version.id}>
+                        {version.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              )}
               {useCustomModel && (
                 <label>
                   Custom model ID
