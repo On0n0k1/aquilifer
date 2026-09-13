@@ -3,14 +3,18 @@ import type {
   AquiliferProviderInfo,
   AquiliferRequestPayload,
   AquiliferResponsePayload,
+  AquiliferStreamEvent,
+  AquiliferStreamPortEvent,
+  AquiliferStreamPortRequest,
 } from '../lib/aquilifer-protocol';
+import { AQUILIFER_STREAM_PORT_NAME } from '../lib/aquilifer-protocol';
 import {
   appendHistoryEntry,
   countRecentEntries,
   listHistoryForOrigin,
 } from '../lib/history';
 import { isInternalMessage, type InternalMessage } from '../lib/internal-protocol';
-import { runChat } from '../lib/llm-clients';
+import { runChat, runChatStream } from '../lib/llm-clients';
 import { listProviders, type ProviderConfig } from '../lib/providers';
 import { loadOriginGrants, saveOriginGrants } from '../lib/permissions';
 import { getRateLimitSettings } from '../lib/rate-limits';
@@ -43,6 +47,13 @@ export default defineBackground(() => {
     const origin =
       sender.origin ?? (sender.url ? new URL(sender.url).origin : undefined);
     return handleRequest(message as AquiliferRequestPayload, origin);
+  });
+
+  browser.runtime.onConnect.addListener((port) => {
+    if (port.name !== AQUILIFER_STREAM_PORT_NAME) return;
+    port.onMessage.addListener((message) =>
+      handleStreamRequest(port, message as AquiliferStreamPortRequest),
+    );
   });
 
   browser.windows.onRemoved.addListener((windowId) => {
@@ -162,6 +173,103 @@ export default defineBackground(() => {
     }
   }
 
+  /** Shared by `chat` and the streaming port handler below. */
+  async function checkAndLogIfBlocked(
+    origin: string,
+    provider: ProviderConfig,
+    params: AquiliferChatParams,
+  ): Promise<{ blocked: boolean; warnings: string[] }> {
+    const { warnings, blocked } = await checkRateLimit(origin, params);
+    if (blocked) {
+      await appendHistoryEntry({
+        id: crypto.randomUUID(),
+        origin,
+        timestamp: Date.now(),
+        providerId: provider.id,
+        providerLabel: provider.label,
+        messages: params.messages,
+        outcome: { ok: false, error: 'rate_limited' },
+        warnings,
+      });
+      await handleBlocked(origin);
+    }
+    return { blocked, warnings };
+  }
+
+  async function handleStreamRequest(
+    port: ReturnType<typeof browser.runtime.connect>,
+    message: AquiliferStreamPortRequest,
+  ) {
+    const { id, params } = message;
+    const sender = port.sender;
+    const origin =
+      sender?.origin ?? (sender?.url ? new URL(sender.url).origin : undefined);
+
+    function send(event: AquiliferStreamEvent) {
+      const portEvent: AquiliferStreamPortEvent = { ...event, id };
+      port.postMessage(portEvent);
+    }
+
+    if (!origin) {
+      send({ type: 'error', error: 'unknown_origin' });
+      return;
+    }
+    await originGrantsLoaded;
+
+    const provider = await resolveBoundProvider(origin);
+    if (!provider) {
+      send({ type: 'error', error: 'not_connected' });
+      return;
+    }
+    if (!params?.messages?.length) {
+      send({ type: 'error', error: 'missing_messages' });
+      return;
+    }
+
+    const { blocked, warnings } = await checkAndLogIfBlocked(
+      origin,
+      provider,
+      params,
+    );
+    if (blocked) {
+      send({ type: 'error', error: 'rate_limited' });
+      return;
+    }
+
+    let assembled = '';
+    try {
+      await runChatStream(provider, params, (delta) => {
+        assembled += delta;
+        send({ type: 'chunk', delta });
+      });
+      await appendHistoryEntry({
+        id: crypto.randomUUID(),
+        origin,
+        timestamp: Date.now(),
+        providerId: provider.id,
+        providerLabel: provider.label,
+        messages: params.messages,
+        outcome: { ok: true, message: assembled },
+        warnings,
+      });
+      send({ type: 'done' });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : 'chat_failed';
+      await appendHistoryEntry({
+        id: crypto.randomUUID(),
+        origin,
+        timestamp: Date.now(),
+        providerId: provider.id,
+        providerLabel: provider.label,
+        messages: params.messages,
+        outcome: { ok: false, error: errorMessage },
+        warnings,
+      });
+      send({ type: 'error', error: errorMessage });
+    }
+  }
+
   async function handleRequest(
     payload: AquiliferRequestPayload,
     origin: string | undefined,
@@ -212,23 +320,12 @@ export default defineBackground(() => {
           return { ok: false, error: 'missing_messages' };
         }
 
-        const { warnings, blocked } = await checkRateLimit(
+        const { warnings, blocked } = await checkAndLogIfBlocked(
           origin,
+          provider,
           payload.params,
         );
-
         if (blocked) {
-          await appendHistoryEntry({
-            id: crypto.randomUUID(),
-            origin,
-            timestamp: Date.now(),
-            providerId: provider.id,
-            providerLabel: provider.label,
-            messages: payload.params.messages,
-            outcome: { ok: false, error: 'rate_limited' },
-            warnings,
-          });
-          await handleBlocked(origin);
           return { ok: false, error: 'rate_limited' };
         }
 

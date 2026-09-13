@@ -5,15 +5,16 @@
 
 import type { AquiliferChatParams } from '../aquilifer-protocol';
 import type { AnthropicProvider } from '../providers';
-import { describeError, type ChatResult } from './shared';
+import { describeError, readSseDataLines, type ChatResult } from './shared';
 
 const ANTHROPIC_API_VERSION = '2023-06-01';
 const DEFAULT_MAX_TOKENS = 1024;
 
-export async function callAnthropic(
+function buildRequestBody(
   provider: AnthropicProvider,
   params: AquiliferChatParams,
-): Promise<ChatResult> {
+  stream: boolean,
+) {
   // The Messages API takes `system` separately from the `messages` array.
   const system = params.messages
     .filter((message) => message.role === 'system')
@@ -23,25 +24,37 @@ export async function callAnthropic(
     .filter((message) => message.role !== 'system')
     .map((message) => ({ role: message.role, content: message.content }));
 
+  return {
+    model: provider.model,
+    max_tokens: DEFAULT_MAX_TOKENS,
+    ...(system ? { system } : {}),
+    messages,
+    ...(stream ? { stream: true } : {}),
+  };
+}
+
+function requestHeaders(provider: AnthropicProvider) {
+  return {
+    'content-type': 'application/json',
+    'x-api-key': provider.apiKey,
+    'anthropic-version': ANTHROPIC_API_VERSION,
+    // Anthropic requires this explicit acknowledgment for any request
+    // carrying a browser-style Origin header (which every fetch() from an
+    // extension context does, background service worker included) — the
+    // sanctioned opt-in for calling the API directly from a browser
+    // extension with the user's own key, rather than through a backend.
+    'anthropic-dangerous-direct-browser-access': 'true',
+  };
+}
+
+export async function callAnthropic(
+  provider: AnthropicProvider,
+  params: AquiliferChatParams,
+): Promise<ChatResult> {
   const response = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': provider.apiKey,
-      'anthropic-version': ANTHROPIC_API_VERSION,
-      // Anthropic requires this explicit acknowledgment for any request
-      // carrying a browser-style Origin header (which every fetch() from an
-      // extension context does, background service worker included) — the
-      // sanctioned opt-in for calling the API directly from a browser
-      // extension with the user's own key, rather than through a backend.
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
-    body: JSON.stringify({
-      model: provider.model,
-      max_tokens: DEFAULT_MAX_TOKENS,
-      ...(system ? { system } : {}),
-      messages,
-    }),
+    headers: requestHeaders(provider),
+    body: JSON.stringify(buildRequestBody(provider, params, false)),
   });
 
   if (!response.ok) throw new Error(await describeError(response));
@@ -56,4 +69,43 @@ export async function callAnthropic(
     .join('');
 
   return { text, model: data.model };
+}
+
+export async function streamAnthropic(
+  provider: AnthropicProvider,
+  params: AquiliferChatParams,
+  onDelta: (text: string) => void,
+): Promise<void> {
+  const response = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: requestHeaders(provider),
+    body: JSON.stringify(buildRequestBody(provider, params, true)),
+  });
+
+  if (!response.ok) throw new Error(await describeError(response));
+  if (!response.body) throw new Error('empty_stream_body');
+
+  for await (const raw of readSseDataLines(response.body)) {
+    let event: {
+      type?: string;
+      delta?: { type?: string; text?: string };
+      error?: unknown;
+    };
+    try {
+      event = JSON.parse(raw);
+    } catch {
+      continue;
+    }
+
+    if (event.type === 'error') {
+      throw new Error(`provider_stream_error: ${JSON.stringify(event.error)}`);
+    }
+    if (
+      event.type === 'content_block_delta' &&
+      event.delta?.type === 'text_delta' &&
+      event.delta.text
+    ) {
+      onDelta(event.delta.text);
+    }
+  }
 }

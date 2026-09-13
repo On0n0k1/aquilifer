@@ -7,7 +7,14 @@
 
 import type { AquiliferChatParams } from '../aquilifer-protocol';
 import type { OpenAICompatibleProvider } from '../providers';
-import { describeError, type ChatResult } from './shared';
+import { describeError, readSseDataLines, type ChatResult } from './shared';
+
+function requestHeaders(provider: OpenAICompatibleProvider) {
+  return {
+    'content-type': 'application/json',
+    ...(provider.apiKey ? { authorization: `Bearer ${provider.apiKey}` } : {}),
+  };
+}
 
 export async function callOpenAICompatible(
   provider: OpenAICompatibleProvider,
@@ -17,12 +24,7 @@ export async function callOpenAICompatible(
 
   const response = await fetch(`${base}/v1/chat/completions`, {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      ...(provider.apiKey
-        ? { authorization: `Bearer ${provider.apiKey}` }
-        : {}),
-    },
+    headers: requestHeaders(provider),
     body: JSON.stringify({
       model: provider.model,
       messages: params.messages,
@@ -37,4 +39,39 @@ export async function callOpenAICompatible(
   };
 
   return { text: data.choices?.[0]?.message?.content ?? '', model: data.model };
+}
+
+export async function streamOpenAICompatible(
+  provider: OpenAICompatibleProvider,
+  params: AquiliferChatParams,
+  onDelta: (text: string) => void,
+): Promise<void> {
+  const base = provider.baseUrl.replace(/\/+$/, '');
+
+  const response = await fetch(`${base}/v1/chat/completions`, {
+    method: 'POST',
+    headers: requestHeaders(provider),
+    body: JSON.stringify({
+      model: provider.model,
+      messages: params.messages,
+      stream: true,
+    }),
+  });
+
+  if (!response.ok) throw new Error(await describeError(response));
+  if (!response.body) throw new Error('empty_stream_body');
+
+  for await (const raw of readSseDataLines(response.body)) {
+    if (raw === '[DONE]') break;
+
+    let chunk: { choices?: { delta?: { content?: string } }[] };
+    try {
+      chunk = JSON.parse(raw);
+    } catch {
+      continue;
+    }
+
+    const delta = chunk.choices?.[0]?.delta?.content;
+    if (delta) onDelta(delta);
+  }
 }
