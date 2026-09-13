@@ -1,5 +1,6 @@
 import type {
   AquiliferChatParams,
+  AquiliferProviderInfo,
   AquiliferRequestPayload,
   AquiliferResponsePayload,
 } from '../lib/aquilifer-protocol';
@@ -267,6 +268,18 @@ export default defineBackground(() => {
         }
         const entries = await listHistoryForOrigin(origin);
         return { ok: true, result: entries };
+      }
+
+      case 'getProvider': {
+        const provider = await resolveBoundProvider(origin);
+        if (!provider) {
+          return { ok: false, error: 'not_connected' };
+        }
+        const info: AquiliferProviderInfo = {
+          type: provider.type,
+          model: provider.resolvedModel ?? provider.model,
+        };
+        return { ok: true, result: info };
       }
 
       default:
