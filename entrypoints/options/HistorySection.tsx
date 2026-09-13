@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { clearHistory, listHistory, type HistoryEntry } from '../../lib/history';
+import { clearHistory, listHistory, type HistoryEntry } from '../../lib/history/generic';
 
 const WARNING_LABELS: Record<string, string> = {
   large_request: 'large request',

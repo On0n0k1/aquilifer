@@ -12,7 +12,7 @@ import {
   appendHistoryEntry,
   countRecentEntries,
   listHistoryForOrigin,
-} from '../lib/history';
+} from '../lib/history/generic';
 import { isInternalMessage, type InternalMessage } from '../lib/internal-protocol';
 import { runChat, runChatStream } from '../lib/llm-clients';
 import { listProviders, type ProviderConfig } from '../lib/providers';
