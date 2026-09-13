@@ -15,11 +15,12 @@ export type AnthropicMessagesRequest = Omit<
   Anthropic.MessageCreateParamsNonStreaming,
   'model' | 'stream'
 >;
+export type AnthropicMessagesResponse = Anthropic.Message;
 
 export async function callAnthropicMessages(
   provider: AnthropicProvider,
   body: AnthropicMessagesRequest,
-): Promise<Anthropic.Message> {
+): Promise<AnthropicMessagesResponse> {
   // The type already omits `stream`, but the actual wire format crossing
   // postMessage/sendMessage is untyped JSON — a caller ignoring our types
   // could still send it, so this is a real runtime guard, not a formality.
@@ -42,5 +43,5 @@ export async function callAnthropicMessages(
 
   if (!response.ok) throw new Error(await describeError(response));
 
-  return (await response.json()) as Anthropic.Message;
+  return (await response.json()) as AnthropicMessagesResponse;
 }

@@ -13,18 +13,45 @@ import {
   countRecentEntries,
   listHistoryForOrigin,
 } from '../lib/history/generic';
+import * as anthropicMessagesHistory from '../lib/history/anthropic-messages';
+import * as openaiChatCompletionsHistory from '../lib/history/openai-chat-completions';
 import { isInternalMessage, type InternalMessage } from '../lib/internal-protocol';
 import { runChat, runChatStream } from '../lib/llm-clients';
-import { listProviders, type ProviderConfig } from '../lib/providers';
+import {
+  callAnthropicMessages,
+  callOpenAIChatCompletions,
+} from '../lib/provider-interfaces';
+import {
+  listProviders,
+  type AnthropicProvider,
+  type OpenAICompatibleProvider,
+  type ProviderConfig,
+  type ProviderType,
+} from '../lib/providers';
 import { loadOriginGrants, saveOriginGrants } from '../lib/permissions';
 import { getRateLimitSettings } from '../lib/rate-limits';
 
+type ApprovalOutcome =
+  | { approved: true; providerId: string }
+  | { approved: false; reason: string; code?: string };
+
 export default defineBackground(() => {
   // origin -> bound providerId, chosen by the user in the approval popup.
+  // Exactly one provider per origin, always — a provider-specific call
+  // needing a different type triggers a switch (replacing this), never an
+  // additional grant (SPEC §4).
   const originGrants = new Map<string, string>();
   const pendingApprovals = new Map<
     string,
-    { resolve: (response: AquiliferResponsePayload) => void; windowId?: number }
+    {
+      resolve: (outcome: ApprovalOutcome) => void;
+      windowId?: number;
+      /** True only for a switch request where zero providers of the
+       *  required type exist — a more specific reason than a plain denial. */
+      noProviderOfType: boolean;
+      deniedReason: string;
+      deniedCode?: string;
+    }
   >();
   const windowIdToOrigin = new Map<number, string>();
 
@@ -63,12 +90,27 @@ export default defineBackground(() => {
 
     // Window closed without an explicit Approve/Deny click (e.g. the user hit
     // the X) counts as a denial — never leave a request hanging forever.
-    const pending = pendingApprovals.get(origin);
-    if (pending) {
-      pendingApprovals.delete(origin);
-      pending.resolve({ ok: false, error: 'connect_denied' });
-    }
+    resolvePendingDenial(origin);
   });
+
+  function resolvePendingDenial(origin: string) {
+    const pending = pendingApprovals.get(origin);
+    if (!pending) return;
+    pendingApprovals.delete(origin);
+    pending.resolve(
+      pending.noProviderOfType
+        ? {
+            approved: false,
+            reason: 'no_provider_of_type',
+            code: 'no_provider_of_type',
+          }
+        : {
+            approved: false,
+            reason: pending.deniedReason,
+            code: pending.deniedCode,
+          },
+    );
+  }
 
   async function handleInternalMessage(
     message: InternalMessage,
@@ -76,18 +118,16 @@ export default defineBackground(() => {
     if (message.type === 'resolveConnect') {
       const pending = pendingApprovals.get(message.origin);
       if (pending) {
-        pendingApprovals.delete(message.origin);
         if (pending.windowId != null) {
           windowIdToOrigin.delete(pending.windowId);
           browser.windows.remove(pending.windowId).catch(() => {});
         }
 
         if (message.approve) {
-          originGrants.set(message.origin, message.providerId);
-          persistOriginGrants();
-          pending.resolve({ ok: true, result: { connected: true } });
+          pendingApprovals.delete(message.origin);
+          pending.resolve({ approved: true, providerId: message.providerId });
         } else {
-          pending.resolve({ ok: false, error: 'connect_denied' });
+          resolvePendingDenial(message.origin);
         }
       }
     }
@@ -98,6 +138,50 @@ export default defineBackground(() => {
     }
 
     return { ok: true };
+  }
+
+  /**
+   * Opens the approval popup — used both for a fresh `connect` (no
+   * `requiredType`) and for a provider-specific-interface switch request
+   * (§4, §5). Resolves once the popup is answered one way or another.
+   */
+  async function openApprovalPopup(
+    origin: string,
+    options: { requiredType?: ProviderType; currentProviderLabel?: string } = {},
+  ): Promise<ApprovalOutcome> {
+    const providers = await listProviders();
+    const matching = options.requiredType
+      ? providers.filter((provider) => provider.type === options.requiredType)
+      : providers;
+
+    return new Promise<ApprovalOutcome>((resolve) => {
+      pendingApprovals.set(origin, {
+        resolve,
+        noProviderOfType: Boolean(options.requiredType) && matching.length === 0,
+        deniedReason: options.requiredType ? 'switch_denied' : 'connect_denied',
+        deniedCode: options.requiredType ? 'switch_denied' : undefined,
+      });
+
+      const params = new URLSearchParams({ origin });
+      if (options.requiredType) params.set('requiredType', options.requiredType);
+      if (options.currentProviderLabel) {
+        params.set('currentProviderLabel', options.currentProviderLabel);
+      }
+
+      browser.windows
+        .create({
+          url: browser.runtime.getURL(`/approve.html?${params.toString()}`),
+          type: 'popup',
+          width: 380,
+          height: 320,
+        })
+        .then((win) => {
+          if (win?.id == null) return;
+          windowIdToOrigin.set(win.id, origin);
+          const stillPending = pendingApprovals.get(origin);
+          if (stillPending) stillPending.windowId = win.id;
+        });
+    });
   }
 
   /**
@@ -119,6 +203,51 @@ export default defineBackground(() => {
       persistOriginGrants();
     }
     return provider;
+  }
+
+  /**
+   * Ensures `origin` is bound to a provider of `requiredType`, prompting a
+   * switch (§4, §5) if it currently isn't. A switch replaces the origin's
+   * entire binding — generic `chat`/`stream` start using the new provider
+   * too, not just the call that triggered the switch.
+   */
+  async function ensureProviderType(
+    origin: string,
+    requiredType: ProviderType,
+  ): Promise<
+    { ok: true; provider: ProviderConfig } | { ok: false; error: string; code?: string }
+  > {
+    const bound = await resolveBoundProvider(origin);
+    if (bound && bound.type === requiredType) {
+      return { ok: true, provider: bound };
+    }
+
+    if (pendingApprovals.has(origin)) {
+      return { ok: false, error: 'connect_pending' };
+    }
+
+    const outcome = await openApprovalPopup(origin, {
+      requiredType,
+      currentProviderLabel: bound?.label,
+    });
+
+    if (!outcome.approved) {
+      return { ok: false, error: outcome.reason, code: outcome.code };
+    }
+
+    originGrants.set(origin, outcome.providerId);
+    persistOriginGrants();
+
+    const providers = await listProviders();
+    const provider = providers.find((p) => p.id === outcome.providerId);
+    if (!provider) {
+      return {
+        ok: false,
+        error: 'provider_unavailable',
+        code: 'provider_unavailable',
+      };
+    }
+    return { ok: true, provider };
   }
 
   /**
@@ -286,24 +415,17 @@ export default defineBackground(() => {
           return { ok: false, error: 'connect_pending' };
         }
 
-        return new Promise<AquiliferResponsePayload>((resolve) => {
-          pendingApprovals.set(origin, { resolve });
-          browser.windows
-            .create({
-              url: browser.runtime.getURL(
-                `/approve.html?origin=${encodeURIComponent(origin)}`,
-              ),
-              type: 'popup',
-              width: 380,
-              height: 320,
-            })
-            .then((win) => {
-              if (win?.id == null) return;
-              windowIdToOrigin.set(win.id, origin);
-              const stillPending = pendingApprovals.get(origin);
-              if (stillPending) stillPending.windowId = win.id;
-            });
-        });
+        const outcome = await openApprovalPopup(origin);
+        if (outcome.approved) {
+          originGrants.set(origin, outcome.providerId);
+          persistOriginGrants();
+          return { ok: true, result: { connected: true } };
+        }
+        return {
+          ok: false,
+          error: outcome.reason,
+          ...(outcome.code ? { code: outcome.code } : {}),
+        };
       }
 
       case 'disconnect':
@@ -377,6 +499,99 @@ export default defineBackground(() => {
           model: provider.resolvedModel ?? provider.model,
         };
         return { ok: true, result: info };
+      }
+
+      // Provider-specific interfaces (SPEC §5). Rate limiting isn't wired
+      // in here yet — that's the two-tier global/per-interface work still
+      // to come; these calls are only gated by connection/switch approval
+      // for now.
+      case 'anthropicMessages': {
+        const resolved = await ensureProviderType(origin, 'anthropic');
+        if (!resolved.ok) {
+          return {
+            ok: false,
+            error: resolved.error,
+            ...(resolved.code ? { code: resolved.code } : {}),
+          };
+        }
+        const provider = resolved.provider as AnthropicProvider;
+        const requestSummary = JSON.stringify(payload.params).slice(0, 500);
+
+        try {
+          const result = await callAnthropicMessages(provider, payload.params);
+          await anthropicMessagesHistory.appendHistoryEntry({
+            id: crypto.randomUUID(),
+            origin,
+            timestamp: Date.now(),
+            providerId: provider.id,
+            providerLabel: provider.label,
+            requestSummary,
+            outcome: {
+              ok: true,
+              responseSummary: JSON.stringify(result).slice(0, 500),
+            },
+          });
+          return { ok: true, result };
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : 'chat_failed';
+          await anthropicMessagesHistory.appendHistoryEntry({
+            id: crypto.randomUUID(),
+            origin,
+            timestamp: Date.now(),
+            providerId: provider.id,
+            providerLabel: provider.label,
+            requestSummary,
+            outcome: { ok: false, error: errorMessage },
+          });
+          return { ok: false, error: errorMessage };
+        }
+      }
+
+      case 'openaiChatCompletions': {
+        const resolved = await ensureProviderType(origin, 'openai-compatible');
+        if (!resolved.ok) {
+          return {
+            ok: false,
+            error: resolved.error,
+            ...(resolved.code ? { code: resolved.code } : {}),
+          };
+        }
+        const provider = resolved.provider as OpenAICompatibleProvider;
+        const requestSummary = JSON.stringify(payload.params).slice(0, 500);
+
+        try {
+          const result = await callOpenAIChatCompletions(
+            provider,
+            payload.params,
+          );
+          await openaiChatCompletionsHistory.appendHistoryEntry({
+            id: crypto.randomUUID(),
+            origin,
+            timestamp: Date.now(),
+            providerId: provider.id,
+            providerLabel: provider.label,
+            requestSummary,
+            outcome: {
+              ok: true,
+              responseSummary: JSON.stringify(result).slice(0, 500),
+            },
+          });
+          return { ok: true, result };
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error ? error.message : 'chat_failed';
+          await openaiChatCompletionsHistory.appendHistoryEntry({
+            id: crypto.randomUUID(),
+            origin,
+            timestamp: Date.now(),
+            providerId: provider.id,
+            providerLabel: provider.label,
+            requestSummary,
+            outcome: { ok: false, error: errorMessage },
+          });
+          return { ok: false, error: errorMessage };
+        }
       }
 
       default:

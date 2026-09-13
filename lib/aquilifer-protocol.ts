@@ -9,12 +9,19 @@ export const AQUILIFER_STREAM_PAGE_SOURCE = 'aquilifer-stream-page';
 export const AQUILIFER_STREAM_CONTENT_SOURCE = 'aquilifer-stream-content';
 export const AQUILIFER_STREAM_PORT_NAME = 'aquilifer-stream';
 
+import type {
+  AnthropicMessagesRequest,
+  OpenAIChatCompletionsRequest,
+} from './provider-interfaces';
+
 export type AquiliferMethod =
   | 'connect'
   | 'disconnect'
   | 'chat'
   | 'getHistory'
-  | 'getProvider';
+  | 'getProvider'
+  | 'anthropicMessages'
+  | 'openaiChatCompletions';
 
 export interface AquiliferChatParams {
   messages: { role: 'user' | 'assistant' | 'system'; content: string }[];
@@ -27,14 +34,29 @@ export interface AquiliferProviderInfo {
   model: string;
 }
 
-export interface AquiliferRequestPayload {
-  method: AquiliferMethod;
-  params?: AquiliferChatParams;
-}
+/** What `window.aquilifer.request()` accepts — the generic, provider-
+ *  agnostic surface. Someone who just wants "ask the LLM something" never
+ *  needs to see anything beyond this. */
+export type AquiliferGenericRequestPayload =
+  | { method: 'connect' | 'disconnect' | 'getHistory' | 'getProvider' }
+  | { method: 'chat'; params: AquiliferChatParams };
+
+/** The provider-specific interfaces (SPEC §5) — reached only through their
+ *  own dedicated methods (`window.aquilifer.anthropicMessages`,
+ *  `.openaiChatCompletions`), never through `request()`. Same wire
+ *  protocol underneath (background dispatches on `method` either way), but
+ *  kept out of `request()`'s type so the generic path stays simple. */
+export type AquiliferNativeRequestPayload =
+  | { method: 'anthropicMessages'; params: AnthropicMessagesRequest }
+  | { method: 'openaiChatCompletions'; params: OpenAIChatCompletionsRequest };
+
+export type AquiliferRequestPayload =
+  | AquiliferGenericRequestPayload
+  | AquiliferNativeRequestPayload;
 
 export type AquiliferResponsePayload =
   | { ok: true; result: unknown }
-  | { ok: false; error: string };
+  | { ok: false; error: string; code?: string };
 
 export interface AquiliferPageMessage {
   source: typeof AQUILIFER_PAGE_SOURCE;

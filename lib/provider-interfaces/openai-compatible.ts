@@ -11,11 +11,12 @@ export type OpenAIChatCompletionsRequest = Omit<
   OpenAI.ChatCompletionCreateParamsNonStreaming,
   'model' | 'stream'
 >;
+export type OpenAIChatCompletionsResponse = OpenAI.ChatCompletion;
 
 export async function callOpenAIChatCompletions(
   provider: OpenAICompatibleProvider,
   body: OpenAIChatCompletionsRequest,
-): Promise<OpenAI.ChatCompletion> {
+): Promise<OpenAIChatCompletionsResponse> {
   if ((body as { stream?: unknown }).stream) {
     throw new Error('streaming_not_supported');
   }
@@ -35,5 +36,5 @@ export async function callOpenAIChatCompletions(
 
   if (!response.ok) throw new Error(await describeError(response));
 
-  return (await response.json()) as OpenAI.ChatCompletion;
+  return (await response.json()) as OpenAIChatCompletionsResponse;
 }

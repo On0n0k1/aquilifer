@@ -7,14 +7,24 @@ import {
   getDefaultProviderId,
   listProviders,
   type ProviderConfig,
+  type ProviderType,
 } from '../../lib/providers';
 
-function getOriginFromQuery(): string {
-  return new URLSearchParams(window.location.search).get('origin') ?? '';
+const SIGN_UP_LINKS: Partial<Record<ProviderType, string>> = {
+  anthropic: 'https://console.anthropic.com/',
+};
+
+function getQueryParams() {
+  const params = new URLSearchParams(window.location.search);
+  return {
+    origin: params.get('origin') ?? '',
+    requiredType: (params.get('requiredType') as ProviderType | null) ?? undefined,
+    currentProviderLabel: params.get('currentProviderLabel') ?? undefined,
+  };
 }
 
 function App() {
-  const [origin] = useState(getOriginFromQuery);
+  const [{ origin, requiredType, currentProviderLabel }] = useState(getQueryParams);
   const [providers, setProviders] = useState<ProviderConfig[] | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState('');
   const [responded, setResponded] = useState(false);
@@ -22,13 +32,18 @@ function App() {
   useEffect(() => {
     Promise.all([listProviders(), getDefaultProviderId()]).then(
       ([loadedProviders, defaultProviderId]) => {
-        setProviders(loadedProviders);
+        const matching = requiredType
+          ? loadedProviders.filter((provider) => provider.type === requiredType)
+          : loadedProviders;
+        setProviders(matching);
         setSelectedProviderId(
-          defaultProviderId ?? loadedProviders[0]?.id ?? '',
+          matching.find((provider) => provider.id === defaultProviderId)?.id ??
+            matching[0]?.id ??
+            '',
         );
       },
     );
-  }, []);
+  }, [requiredType]);
 
   async function deny() {
     setResponded(true);
@@ -58,18 +73,42 @@ function App() {
 
   const loading = providers === null;
   const hasProviders = (providers?.length ?? 0) > 0;
+  const isSwitch = Boolean(requiredType);
+  const signUpLink = requiredType ? SIGN_UP_LINKS[requiredType] : undefined;
 
   return (
     <main>
-      <h1>Connection request</h1>
+      <h1>{isSwitch ? 'Switch provider' : 'Connection request'}</h1>
       <p>
-        <strong>{origin}</strong> wants to connect to Aquilifer and send
-        requests to an LLM.
+        <strong>{origin}</strong>{' '}
+        {isSwitch ? (
+          <>
+            wants to switch{' '}
+            {currentProviderLabel ? (
+              <>
+                from <strong>{currentProviderLabel}</strong>{' '}
+              </>
+            ) : null}
+            to your {requiredType} provider.
+          </>
+        ) : (
+          <>wants to connect to Aquilifer and send requests to an LLM.</>
+        )}
       </p>
 
       {!loading && !hasProviders && (
         <p className="warning">
-          No providers configured yet. Add one in settings before approving.
+          {isSwitch
+            ? `You don't have a ${requiredType} provider configured yet.`
+            : 'No providers configured yet.'}{' '}
+          {signUpLink ? (
+            <a href={signUpLink} target="_blank" rel="noreferrer">
+              Sign up
+            </a>
+          ) : (
+            'Add one in settings'
+          )}{' '}
+          before approving.
         </p>
       )}
 
