@@ -29,7 +29,10 @@ import {
   type ProviderType,
 } from '../lib/providers';
 import { loadOriginGrants, saveOriginGrants } from '../lib/permissions';
-import { getRateLimitSettings } from '../lib/rate-limits';
+import {
+  getRateLimitSettings,
+  type RateLimitInterface,
+} from '../lib/rate-limits';
 
 type ApprovalOutcome =
   | { approved: true; providerId: string }
@@ -250,29 +253,62 @@ export default defineBackground(() => {
     return { ok: true, provider };
   }
 
-  /**
-   * Size crossing its threshold is a non-blocking warning; frequency
-   * crossing its threshold blocks the request (SPEC §4, §6). The frequency
-   * count is based on existing history entries, so it costs no extra state.
-   */
-  async function checkRateLimit(
+  function bucketCounter(interfaceName: RateLimitInterface) {
+    switch (interfaceName) {
+      case 'generic':
+        return countRecentEntries;
+      case 'anthropicMessages':
+        return anthropicMessagesHistory.countRecentEntries;
+      case 'openaiChatCompletions':
+        return openaiChatCompletionsHistory.countRecentEntries;
+    }
+  }
+
+  async function countAcrossAllInterfaces(
     origin: string,
-    params: AquiliferChatParams,
+    windowMs: number,
+  ): Promise<number> {
+    const counts = await Promise.all(
+      (
+        ['generic', 'anthropicMessages', 'openaiChatCompletions'] as const
+      ).map((interfaceName) => bucketCounter(interfaceName)(origin, windowMs)),
+    );
+    return counts.reduce((sum, count) => sum + count, 0);
+  }
+
+  /**
+   * Size crossing its threshold is a non-blocking warning; frequency is
+   * two-tiered (SPEC §4): a global limit summed across every interface's
+   * history bucket, and a tighter per-interface limit on top. Blocked if
+   * either is exceeded. All counts read existing history entries, so this
+   * costs no extra state.
+   */
+  async function computeRateLimitOutcome(
+    origin: string,
+    interfaceName: RateLimitInterface,
+    sizeChars: number,
   ): Promise<{ warnings: string[]; blocked: boolean }> {
     const settings = await getRateLimitSettings();
     const warnings: string[] = [];
 
-    const totalChars = params.messages.reduce(
-      (sum, message) => sum + message.content.length,
-      0,
-    );
-    if (totalChars > settings.sizeThresholdChars) {
+    if (sizeChars > settings.sizeThresholdChars) {
       warnings.push('large_request');
     }
 
-    const windowMs = settings.frequencyWindowMinutes * 60_000;
-    const recentCount = await countRecentEntries(origin, windowMs);
-    const blocked = recentCount >= settings.frequencyThreshold;
+    const perInterface = settings.perInterface[interfaceName];
+    const perInterfaceCount = await bucketCounter(interfaceName)(
+      origin,
+      perInterface.windowMinutes * 60_000,
+    );
+    const perInterfaceBlocked = perInterfaceCount >= perInterface.threshold;
+
+    const globalCount = await countAcrossAllInterfaces(
+      origin,
+      settings.global.windowMinutes * 60_000,
+    );
+    const globalBlocked = globalCount >= settings.global.threshold;
+
+    const blocked = perInterfaceBlocked || globalBlocked;
     if (blocked) warnings.push('rate_limited');
 
     return { warnings, blocked };
@@ -286,7 +322,7 @@ export default defineBackground(() => {
         type: 'basic',
         iconUrl: browser.runtime.getURL('/icon/128.png'),
         title: 'Aquilifer: request blocked',
-        message: `${origin} hit the rate limit (${settings.frequencyThreshold} requests / ${settings.frequencyWindowMinutes} min) and was blocked.`,
+        message: `${origin} hit a rate limit and was blocked.`,
       });
     }
 
@@ -308,7 +344,15 @@ export default defineBackground(() => {
     provider: ProviderConfig,
     params: AquiliferChatParams,
   ): Promise<{ blocked: boolean; warnings: string[] }> {
-    const { warnings, blocked } = await checkRateLimit(origin, params);
+    const totalChars = params.messages.reduce(
+      (sum, message) => sum + message.content.length,
+      0,
+    );
+    const { warnings, blocked } = await computeRateLimitOutcome(
+      origin,
+      'generic',
+      totalChars,
+    );
     if (blocked) {
       await appendHistoryEntry({
         id: crypto.randomUUID(),
@@ -501,10 +545,8 @@ export default defineBackground(() => {
         return { ok: true, result: info };
       }
 
-      // Provider-specific interfaces (SPEC §5). Rate limiting isn't wired
-      // in here yet — that's the two-tier global/per-interface work still
-      // to come; these calls are only gated by connection/switch approval
-      // for now.
+      // Provider-specific interfaces (SPEC §5), gated by connection/switch
+      // approval and the same two-tier rate limiting as `chat` (§4).
       case 'anthropicMessages': {
         const resolved = await ensureProviderType(origin, 'anthropic');
         if (!resolved.ok) {
@@ -515,7 +557,28 @@ export default defineBackground(() => {
           };
         }
         const provider = resolved.provider as AnthropicProvider;
-        const requestSummary = JSON.stringify(payload.params).slice(0, 500);
+        const fullRequestJson = JSON.stringify(payload.params);
+        const requestSummary = fullRequestJson.slice(0, 500);
+
+        const { warnings, blocked } = await computeRateLimitOutcome(
+          origin,
+          'anthropicMessages',
+          fullRequestJson.length,
+        );
+        if (blocked) {
+          await anthropicMessagesHistory.appendHistoryEntry({
+            id: crypto.randomUUID(),
+            origin,
+            timestamp: Date.now(),
+            providerId: provider.id,
+            providerLabel: provider.label,
+            requestSummary,
+            outcome: { ok: false, error: 'rate_limited' },
+            warnings,
+          });
+          await handleBlocked(origin);
+          return { ok: false, error: 'rate_limited' };
+        }
 
         try {
           const result = await callAnthropicMessages(provider, payload.params);
@@ -530,6 +593,7 @@ export default defineBackground(() => {
               ok: true,
               responseSummary: JSON.stringify(result).slice(0, 500),
             },
+            warnings,
           });
           return { ok: true, result };
         } catch (error) {
@@ -543,6 +607,7 @@ export default defineBackground(() => {
             providerLabel: provider.label,
             requestSummary,
             outcome: { ok: false, error: errorMessage },
+            warnings,
           });
           return { ok: false, error: errorMessage };
         }
@@ -558,7 +623,28 @@ export default defineBackground(() => {
           };
         }
         const provider = resolved.provider as OpenAICompatibleProvider;
-        const requestSummary = JSON.stringify(payload.params).slice(0, 500);
+        const fullRequestJson = JSON.stringify(payload.params);
+        const requestSummary = fullRequestJson.slice(0, 500);
+
+        const { warnings, blocked } = await computeRateLimitOutcome(
+          origin,
+          'openaiChatCompletions',
+          fullRequestJson.length,
+        );
+        if (blocked) {
+          await openaiChatCompletionsHistory.appendHistoryEntry({
+            id: crypto.randomUUID(),
+            origin,
+            timestamp: Date.now(),
+            providerId: provider.id,
+            providerLabel: provider.label,
+            requestSummary,
+            outcome: { ok: false, error: 'rate_limited' },
+            warnings,
+          });
+          await handleBlocked(origin);
+          return { ok: false, error: 'rate_limited' };
+        }
 
         try {
           const result = await callOpenAIChatCompletions(
@@ -576,6 +662,7 @@ export default defineBackground(() => {
               ok: true,
               responseSummary: JSON.stringify(result).slice(0, 500),
             },
+            warnings,
           });
           return { ok: true, result };
         } catch (error) {
@@ -589,6 +676,7 @@ export default defineBackground(() => {
             providerLabel: provider.label,
             requestSummary,
             outcome: { ok: false, error: errorMessage },
+            warnings,
           });
           return { ok: false, error: errorMessage };
         }

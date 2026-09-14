@@ -3,8 +3,52 @@ import {
   DEFAULT_RATE_LIMIT_SETTINGS,
   getRateLimitSettings,
   setRateLimitSettings,
+  type FrequencyLimit,
+  type RateLimitInterface,
   type RateLimitSettings,
 } from '../../lib/rate-limits';
+
+const INTERFACE_LABELS: Record<RateLimitInterface, string> = {
+  generic: 'Generic chat',
+  anthropicMessages: 'Anthropic Messages',
+  openaiChatCompletions: 'OpenAI Chat Completions',
+};
+
+interface FrequencyFieldsProps {
+  legend: string;
+  value: FrequencyLimit;
+  onChange: (value: FrequencyLimit) => void;
+}
+
+function FrequencyFields({ legend, value, onChange }: FrequencyFieldsProps) {
+  return (
+    <fieldset>
+      <legend>{legend}</legend>
+      <label>
+        Max requests
+        <input
+          type="number"
+          min={1}
+          value={value.threshold}
+          onChange={(event) =>
+            onChange({ ...value, threshold: Number(event.target.value) })
+          }
+        />
+      </label>
+      <label>
+        Per window (minutes)
+        <input
+          type="number"
+          min={1}
+          value={value.windowMinutes}
+          onChange={(event) =>
+            onChange({ ...value, windowMinutes: Number(event.target.value) })
+          }
+        />
+      </label>
+    </fieldset>
+  );
+}
 
 function RateLimitsSection() {
   const [rateLimits, setRateLimits] = useState<RateLimitSettings>(
@@ -27,34 +71,31 @@ function RateLimitsSection() {
     <section>
       <h2>Rate limiting</h2>
       <form onSubmit={handleSave}>
-        <label>
-          Max requests per origin
-          <input
-            type="number"
-            min={1}
-            value={rateLimits.frequencyThreshold}
-            onChange={(event) =>
-              setRateLimits({
-                ...rateLimits,
-                frequencyThreshold: Number(event.target.value),
-              })
-            }
-          />
-        </label>
-        <label>
-          Per window (minutes)
-          <input
-            type="number"
-            min={1}
-            value={rateLimits.frequencyWindowMinutes}
-            onChange={(event) =>
-              setRateLimits({
-                ...rateLimits,
-                frequencyWindowMinutes: Number(event.target.value),
-              })
-            }
-          />
-        </label>
+        <FrequencyFields
+          legend="Global (all interfaces combined)"
+          value={rateLimits.global}
+          onChange={(global) => setRateLimits({ ...rateLimits, global })}
+        />
+
+        {(Object.keys(rateLimits.perInterface) as RateLimitInterface[]).map(
+          (interfaceName) => (
+            <FrequencyFields
+              key={interfaceName}
+              legend={INTERFACE_LABELS[interfaceName]}
+              value={rateLimits.perInterface[interfaceName]}
+              onChange={(limit) =>
+                setRateLimits({
+                  ...rateLimits,
+                  perInterface: {
+                    ...rateLimits.perInterface,
+                    [interfaceName]: limit,
+                  },
+                })
+              }
+            />
+          ),
+        )}
+
         <label>
           Large-request warning threshold (characters)
           <input

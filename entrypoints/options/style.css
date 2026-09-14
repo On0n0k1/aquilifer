@@ -139,6 +139,22 @@ label {
   font-size: 13px;
 }
 
+fieldset {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid #eee;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 0;
+}
+
+legend {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
 input,
 select {
   padding: 8px;
