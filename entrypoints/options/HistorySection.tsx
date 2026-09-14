@@ -1,29 +1,55 @@
 import { useEffect, useState } from 'react';
-import { clearHistory, listHistory, type HistoryEntry } from '../../lib/history/generic';
+import * as anthropicMessagesHistory from '../../lib/history/anthropic-messages';
+import {
+  clearHistory as clearGenericHistory,
+  listHistory as listGenericHistory,
+  type HistoryEntry,
+} from '../../lib/history/generic';
+import * as openaiChatCompletionsHistory from '../../lib/history/openai-chat-completions';
 
 const WARNING_LABELS: Record<string, string> = {
   large_request: 'large request',
   rate_limited: 'rate limited',
 };
 
-function HistorySection() {
+type HistoryBucket = 'generic' | 'anthropicMessages' | 'openaiChatCompletions';
+
+const BUCKET_LABELS: Record<HistoryBucket, string> = {
+  generic: 'Generic chat',
+  anthropicMessages: 'Anthropic Messages',
+  openaiChatCompletions: 'OpenAI Chat Completions',
+};
+
+function WarningTags({ warnings }: { warnings?: string[] }) {
+  if (!warnings || warnings.length === 0) return null;
+  return (
+    <div className="history-warnings">
+      {warnings.map((warning) => (
+        <span key={warning} className="warning-tag">
+          ⚠ {WARNING_LABELS[warning] ?? warning}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function GenericHistoryList() {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
-    listHistory().then(setHistory);
+    listGenericHistory().then(setHistory);
   }, []);
 
-  async function handleClearHistory() {
-    await clearHistory();
-    setHistory(await listHistory());
+  async function handleClear() {
+    await clearGenericHistory();
+    setHistory(await listGenericHistory());
   }
 
   return (
-    <section>
-      <div className="section-header">
-        <h2>History</h2>
+    <>
+      <div className="history-bucket-header">
         {history.length > 0 && (
-          <button onClick={handleClearHistory}>Clear all</button>
+          <button onClick={handleClear}>Clear all</button>
         )}
       </div>
       {history.length === 0 && <p>No requests yet.</p>}
@@ -39,15 +65,7 @@ function HistorySection() {
                   <span>{new Date(entry.timestamp).toLocaleString()}</span>
                   <span>{entry.providerLabel}</span>
                 </div>
-                {entry.warnings && entry.warnings.length > 0 && (
-                  <div className="history-warnings">
-                    {entry.warnings.map((warning) => (
-                      <span key={warning} className="warning-tag">
-                        ⚠ {WARNING_LABELS[warning] ?? warning}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <WarningTags warnings={entry.warnings} />
                 {lastMessage && (
                   <div className="history-prompt">
                     {lastMessage.role}: {lastMessage.content}
@@ -66,6 +84,106 @@ function HistorySection() {
             );
           })}
       </ul>
+    </>
+  );
+}
+
+// The two provider-specific interfaces log to their own storage bucket
+// (SPEC §7) but share this exact entry shape — one renderer, parameterized
+// by which module it's showing.
+interface NativeHistoryEntry {
+  id: string;
+  origin: string;
+  timestamp: number;
+  providerLabel: string;
+  requestSummary: string;
+  outcome:
+    | { ok: true; responseSummary: string }
+    | { ok: false; error: string };
+  warnings?: string[];
+}
+
+interface NativeHistoryModule {
+  listHistory: () => Promise<NativeHistoryEntry[]>;
+  clearHistory: () => Promise<void>;
+}
+
+function NativeHistoryList({ module }: { module: NativeHistoryModule }) {
+  const [history, setHistory] = useState<NativeHistoryEntry[]>([]);
+
+  useEffect(() => {
+    module.listHistory().then(setHistory);
+  }, [module]);
+
+  async function handleClear() {
+    await module.clearHistory();
+    setHistory(await module.listHistory());
+  }
+
+  return (
+    <>
+      <div className="history-bucket-header">
+        {history.length > 0 && (
+          <button onClick={handleClear}>Clear all</button>
+        )}
+      </div>
+      {history.length === 0 && <p>No requests yet.</p>}
+      <ul className="history-list">
+        {[...history]
+          .sort((a, b) => b.timestamp - a.timestamp)
+          .map((entry) => (
+            <li key={entry.id}>
+              <div className="history-meta">
+                <strong>{entry.origin}</strong>
+                <span>{new Date(entry.timestamp).toLocaleString()}</span>
+                <span>{entry.providerLabel}</span>
+              </div>
+              <WarningTags warnings={entry.warnings} />
+              <div className="history-prompt">{entry.requestSummary}</div>
+              <div
+                className={
+                  entry.outcome.ok ? 'history-result' : 'history-error'
+                }
+              >
+                {entry.outcome.ok
+                  ? entry.outcome.responseSummary
+                  : entry.outcome.error}
+              </div>
+            </li>
+          ))}
+      </ul>
+    </>
+  );
+}
+
+function HistorySection() {
+  const [bucket, setBucket] = useState<HistoryBucket>('generic');
+
+  return (
+    <section>
+      <h2>History</h2>
+
+      <div className="tab-bar" role="tablist">
+        {(Object.keys(BUCKET_LABELS) as HistoryBucket[]).map((key) => (
+          <button
+            key={key}
+            role="tab"
+            aria-selected={bucket === key}
+            className={bucket === key ? 'tab active' : 'tab'}
+            onClick={() => setBucket(key)}
+          >
+            {BUCKET_LABELS[key]}
+          </button>
+        ))}
+      </div>
+
+      {bucket === 'generic' && <GenericHistoryList />}
+      {bucket === 'anthropicMessages' && (
+        <NativeHistoryList module={anthropicMessagesHistory} />
+      )}
+      {bucket === 'openaiChatCompletions' && (
+        <NativeHistoryList module={openaiChatCompletionsHistory} />
+      )}
     </section>
   );
 }
