@@ -1,11 +1,14 @@
 import {
   AQUILIFER_CONTENT_SOURCE,
+  AQUILIFER_EVENT_CONTENT_SOURCE,
   AQUILIFER_PAGE_SOURCE,
   AQUILIFER_STREAM_CONTENT_SOURCE,
   AQUILIFER_STREAM_PAGE_SOURCE,
   type AquiliferChatParams,
   type AquiliferContentMessage,
+  type AquiliferEventContentMessage,
   type AquiliferGenericRequestPayload,
+  type AquiliferPageEvent,
   type AquiliferRequestPayload,
   type AquiliferStreamChunk,
   type AquiliferStreamEventMessage,
@@ -26,7 +29,13 @@ export interface AquiliferError extends Error {
 
 declare global {
   interface Window {
-    aquilifer?: {
+    /**
+     * An `EventTarget` — subscribe to connection changes the normal way:
+     * `window.aquilifer.addEventListener('disconnect', () => {...})`.
+     * Events: `connect`, `disconnect`, `permissionChanged` (SPEC §5); the
+     * first two carry `event.detail` shaped like `getProvider()`'s result.
+     */
+    aquilifer?: EventTarget & {
       request: (payload: AquiliferGenericRequestPayload) => Promise<unknown>;
       stream: (params: AquiliferChatParams) => AsyncIterable<AquiliferStreamChunk>;
       anthropicMessages: (
@@ -52,6 +61,7 @@ export default defineContentScript({
       string,
       ReturnType<typeof createAsyncStreamQueue<AquiliferStreamChunk>>
     >();
+    const events = new EventTarget();
 
     function sendRequest(payload: AquiliferRequestPayload): Promise<unknown> {
       const id = crypto.randomUUID();
@@ -64,11 +74,20 @@ export default defineContentScript({
       });
     }
 
+    function dispatchPageEvent(pageEvent: AquiliferPageEvent) {
+      events.dispatchEvent(
+        'detail' in pageEvent
+          ? new CustomEvent(pageEvent.name, { detail: pageEvent.detail })
+          : new CustomEvent(pageEvent.name),
+      );
+    }
+
     window.addEventListener('message', (event) => {
       if (event.source !== window || event.origin !== location.origin) return;
       const data = event.data as
         | AquiliferContentMessage
         | AquiliferStreamEventMessage
+        | AquiliferEventContentMessage
         | undefined;
       if (!data) return;
 
@@ -100,15 +119,20 @@ export default defineContentScript({
           streams.delete(data.id);
           queue.fail(new Error(data.event.error));
         }
+        return;
+      }
+
+      if (data.source === AQUILIFER_EVENT_CONTENT_SOURCE) {
+        dispatchPageEvent(data.event);
       }
     });
 
-    window.aquilifer = {
-      request(payload) {
+    window.aquilifer = Object.assign(events, {
+      request(payload: AquiliferGenericRequestPayload) {
         return sendRequest(payload);
       },
 
-      stream(params) {
+      stream(params: AquiliferChatParams) {
         const id = crypto.randomUUID();
         const queue = createAsyncStreamQueue<AquiliferStreamChunk>();
         streams.set(id, queue);
@@ -119,19 +143,19 @@ export default defineContentScript({
         return queue;
       },
 
-      anthropicMessages(body) {
+      anthropicMessages(body: AnthropicMessagesRequest) {
         return sendRequest({
           method: 'anthropicMessages',
           params: body,
         }) as Promise<AnthropicMessagesResponse>;
       },
 
-      openaiChatCompletions(body) {
+      openaiChatCompletions(body: OpenAIChatCompletionsRequest) {
         return sendRequest({
           method: 'openaiChatCompletions',
           params: body,
         }) as Promise<OpenAIChatCompletionsResponse>;
       },
-    };
+    });
   },
 });

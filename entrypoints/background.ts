@@ -1,5 +1,6 @@
 import type {
   AquiliferChatParams,
+  AquiliferPageEvent,
   AquiliferProviderInfo,
   AquiliferRequestPayload,
   AquiliferResponsePayload,
@@ -7,7 +8,10 @@ import type {
   AquiliferStreamPortEvent,
   AquiliferStreamPortRequest,
 } from '../lib/aquilifer-protocol';
-import { AQUILIFER_STREAM_PORT_NAME } from '../lib/aquilifer-protocol';
+import {
+  AQUILIFER_EVENTS_PORT_NAME,
+  AQUILIFER_STREAM_PORT_NAME,
+} from '../lib/aquilifer-protocol';
 import {
   appendHistoryEntry,
   countRecentEntries,
@@ -57,6 +61,11 @@ export default defineBackground(() => {
     }
   >();
   const windowIdToOrigin = new Map<number, string>();
+  // origin -> every open events Port for that origin (one per tab/page).
+  const eventPorts = new Map<
+    string,
+    Set<ReturnType<typeof browser.runtime.connect>>
+  >();
 
   // Awaited at the top of handleRequest — the service worker can restart and
   // receive a message before this resolves, which would otherwise reject an
@@ -80,10 +89,31 @@ export default defineBackground(() => {
   });
 
   browser.runtime.onConnect.addListener((port) => {
-    if (port.name !== AQUILIFER_STREAM_PORT_NAME) return;
-    port.onMessage.addListener((message) =>
-      handleStreamRequest(port, message as AquiliferStreamPortRequest),
-    );
+    if (port.name === AQUILIFER_STREAM_PORT_NAME) {
+      port.onMessage.addListener((message) =>
+        handleStreamRequest(port, message as AquiliferStreamPortRequest),
+      );
+      return;
+    }
+
+    if (port.name === AQUILIFER_EVENTS_PORT_NAME) {
+      const sender = port.sender;
+      const origin =
+        sender?.origin ?? (sender?.url ? new URL(sender.url).origin : undefined);
+      if (!origin) return;
+
+      let ports = eventPorts.get(origin);
+      if (!ports) {
+        ports = new Set();
+        eventPorts.set(origin, ports);
+      }
+      ports.add(port);
+
+      port.onDisconnect.addListener(() => {
+        ports?.delete(port);
+        if (ports && ports.size === 0) eventPorts.delete(origin);
+      });
+    }
   });
 
   browser.windows.onRemoved.addListener((windowId) => {
@@ -115,6 +145,25 @@ export default defineBackground(() => {
     );
   }
 
+  function providerInfoFor(provider: ProviderConfig): AquiliferProviderInfo {
+    return { type: provider.type, model: provider.resolvedModel ?? provider.model };
+  }
+
+  /** Pushes a page event (SPEC §5) to every open tab of `origin` — the tab
+   *  that triggered the change already knows via its own response/Promise;
+   *  this is what lets *other* tabs of the same origin stay in sync. */
+  function broadcastEvent(origin: string, event: AquiliferPageEvent) {
+    const ports = eventPorts.get(origin);
+    if (!ports) return;
+    for (const port of ports) {
+      try {
+        port.postMessage(event);
+      } catch {
+        // Port already gone; its own onDisconnect will clean the set up.
+      }
+    }
+  }
+
   async function handleInternalMessage(
     message: InternalMessage,
   ): Promise<{ ok: true }> {
@@ -138,6 +187,7 @@ export default defineBackground(() => {
     if (message.type === 'revokeOrigin') {
       originGrants.delete(message.origin);
       persistOriginGrants();
+      broadcastEvent(message.origin, { name: 'disconnect' });
     }
 
     return { ok: true };
@@ -250,6 +300,14 @@ export default defineBackground(() => {
         code: 'provider_unavailable',
       };
     }
+
+    // `bound` truthy means this was a switch (already connected, just to a
+    // different type); falsy means this origin just connected for the
+    // first time.
+    broadcastEvent(origin, {
+      name: bound ? 'permissionChanged' : 'connect',
+      detail: providerInfoFor(provider),
+    });
     return { ok: true, provider };
   }
 
@@ -463,6 +521,15 @@ export default defineBackground(() => {
         if (outcome.approved) {
           originGrants.set(origin, outcome.providerId);
           persistOriginGrants();
+
+          const providers = await listProviders();
+          const provider = providers.find((p) => p.id === outcome.providerId);
+          if (provider) {
+            broadcastEvent(origin, {
+              name: 'connect',
+              detail: providerInfoFor(provider),
+            });
+          }
           return { ok: true, result: { connected: true } };
         }
         return {
@@ -475,6 +542,7 @@ export default defineBackground(() => {
       case 'disconnect':
         originGrants.delete(origin);
         persistOriginGrants();
+        broadcastEvent(origin, { name: 'disconnect' });
         return { ok: true, result: { connected: false } };
 
       case 'chat': {
@@ -538,11 +606,7 @@ export default defineBackground(() => {
         if (!provider) {
           return { ok: false, error: 'not_connected' };
         }
-        const info: AquiliferProviderInfo = {
-          type: provider.type,
-          model: provider.resolvedModel ?? provider.model,
-        };
-        return { ok: true, result: info };
+        return { ok: true, result: providerInfoFor(provider) };
       }
 
       // Provider-specific interfaces (SPEC §5), gated by connection/switch

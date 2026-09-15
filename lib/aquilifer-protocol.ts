@@ -9,6 +9,14 @@ export const AQUILIFER_STREAM_PAGE_SOURCE = 'aquilifer-stream-page';
 export const AQUILIFER_STREAM_CONTENT_SOURCE = 'aquilifer-stream-content';
 export const AQUILIFER_STREAM_PORT_NAME = 'aquilifer-stream';
 
+// Page-facing events (SPEC §5) need the same kind of push-without-being-
+// asked channel as streaming, but a different lifecycle: one Port per
+// page, opened once at content-script load and kept open for as long as
+// the page exists (reconnected if the background restarts), rather than a
+// fresh Port per call.
+export const AQUILIFER_EVENT_CONTENT_SOURCE = 'aquilifer-event-content';
+export const AQUILIFER_EVENTS_PORT_NAME = 'aquilifer-events';
+
 import type {
   AnthropicMessagesRequest,
   OpenAIChatCompletionsRequest,
@@ -104,3 +112,22 @@ export interface AquiliferStreamPortRequest {
 }
 
 export type AquiliferStreamPortEvent = AquiliferStreamEvent & { id: string };
+
+/** Pushed background -> content -> page whenever an origin's connection
+ *  state changes, without the page having asked. `connect` fires on a 0->1
+ *  transition (fresh connect or switch-approval from unconnected);
+ *  `permissionChanged` fires when an already-connected origin's binding
+ *  changes (e.g. a switch to a different provider); `disconnect` fires on
+ *  a 1->0 transition (explicit disconnect, or revoked from Options). The
+ *  detail on `connect`/`permissionChanged` is the same shape `getProvider`
+ *  returns, so a page doesn't need a follow-up call just to see what it's
+ *  now bound to. */
+export type AquiliferPageEvent =
+  | { name: 'connect'; detail: AquiliferProviderInfo }
+  | { name: 'permissionChanged'; detail: AquiliferProviderInfo }
+  | { name: 'disconnect' };
+
+export interface AquiliferEventContentMessage {
+  source: typeof AQUILIFER_EVENT_CONTENT_SOURCE;
+  event: AquiliferPageEvent;
+}
