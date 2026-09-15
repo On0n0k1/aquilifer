@@ -91,7 +91,7 @@ export interface AquiliferStreamChunk {
 export type AquiliferStreamEvent =
   | { type: 'chunk'; delta: string }
   | { type: 'done' }
-  | { type: 'error'; error: string };
+  | { type: 'error'; error: string; code?: string };
 
 export interface AquiliferStreamStartMessage {
   source: typeof AQUILIFER_STREAM_PAGE_SOURCE;

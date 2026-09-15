@@ -117,7 +117,9 @@ export default defineContentScript({
           queue.close();
         } else {
           streams.delete(data.id);
-          queue.fail(new Error(data.event.error));
+          const error: AquiliferError = new Error(data.event.error);
+          if (data.event.code) error.code = data.event.code;
+          queue.fail(error);
         }
         return;
       }

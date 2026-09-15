@@ -81,7 +81,11 @@ export default defineContentScript({
       port.onDisconnect.addListener(() => {
         // Background restarted or otherwise dropped the port before sending
         // a terminal event — don't leave the page's stream hanging forever.
-        post({ type: 'error', error: 'stream_disconnected' });
+        post({
+          type: 'error',
+          error: 'stream_disconnected',
+          code: 'stream_disconnected',
+        });
       });
 
       const request: AquiliferStreamPortRequest = { id, params };

@@ -149,6 +149,15 @@ export default defineBackground(() => {
     return { type: provider.type, model: provider.resolvedModel ?? provider.model };
   }
 
+  /** Stable `.code` for an error message (SPEC §5, §9) — every fixed
+   *  identifier is its own code; the one message shape that carries dynamic
+   *  detail text (`provider_error_<status>: <body>`) normalizes down to a
+   *  fixed `provider_error` code, so callers never need to string-match
+   *  beyond `.code`. */
+  function codeForErrorMessage(message: string): string {
+    return message.startsWith('provider_error_') ? 'provider_error' : message;
+  }
+
   /** Pushes a page event (SPEC §5) to every open tab of `origin` — the tab
    *  that triggered the change already knows via its own response/Promise;
    *  this is what lets *other* tabs of the same origin stay in sync. */
@@ -212,7 +221,7 @@ export default defineBackground(() => {
         resolve,
         noProviderOfType: Boolean(options.requiredType) && matching.length === 0,
         deniedReason: options.requiredType ? 'switch_denied' : 'connect_denied',
-        deniedCode: options.requiredType ? 'switch_denied' : undefined,
+        deniedCode: options.requiredType ? 'switch_denied' : 'connect_denied',
       });
 
       const params = new URLSearchParams({ origin });
@@ -276,7 +285,7 @@ export default defineBackground(() => {
     }
 
     if (pendingApprovals.has(origin)) {
-      return { ok: false, error: 'connect_pending' };
+      return { ok: false, error: 'connect_pending', code: 'connect_pending' };
     }
 
     const outcome = await openApprovalPopup(origin, {
@@ -442,18 +451,22 @@ export default defineBackground(() => {
     }
 
     if (!origin) {
-      send({ type: 'error', error: 'unknown_origin' });
+      send({ type: 'error', error: 'unknown_origin', code: 'unknown_origin' });
       return;
     }
     await originGrantsLoaded;
 
     const provider = await resolveBoundProvider(origin);
     if (!provider) {
-      send({ type: 'error', error: 'not_connected' });
+      send({ type: 'error', error: 'not_connected', code: 'not_connected' });
       return;
     }
     if (!params?.messages?.length) {
-      send({ type: 'error', error: 'missing_messages' });
+      send({
+        type: 'error',
+        error: 'missing_messages',
+        code: 'missing_messages',
+      });
       return;
     }
 
@@ -463,7 +476,7 @@ export default defineBackground(() => {
       params,
     );
     if (blocked) {
-      send({ type: 'error', error: 'rate_limited' });
+      send({ type: 'error', error: 'rate_limited', code: 'rate_limited' });
       return;
     }
 
@@ -497,7 +510,11 @@ export default defineBackground(() => {
         outcome: { ok: false, error: errorMessage },
         warnings,
       });
-      send({ type: 'error', error: errorMessage });
+      send({
+        type: 'error',
+        error: errorMessage,
+        code: codeForErrorMessage(errorMessage),
+      });
     }
   }
 
@@ -505,7 +522,9 @@ export default defineBackground(() => {
     payload: AquiliferRequestPayload,
     origin: string | undefined,
   ): Promise<AquiliferResponsePayload> {
-    if (!origin) return { ok: false, error: 'unknown_origin' };
+    if (!origin) {
+      return { ok: false, error: 'unknown_origin', code: 'unknown_origin' };
+    }
     await originGrantsLoaded;
 
     switch (payload.method) {
@@ -514,7 +533,7 @@ export default defineBackground(() => {
           return { ok: true, result: { connected: true } };
         }
         if (pendingApprovals.has(origin)) {
-          return { ok: false, error: 'connect_pending' };
+          return { ok: false, error: 'connect_pending', code: 'connect_pending' };
         }
 
         const outcome = await openApprovalPopup(origin);
@@ -548,10 +567,14 @@ export default defineBackground(() => {
       case 'chat': {
         const provider = await resolveBoundProvider(origin);
         if (!provider) {
-          return { ok: false, error: 'not_connected' };
+          return { ok: false, error: 'not_connected', code: 'not_connected' };
         }
         if (!payload.params?.messages?.length) {
-          return { ok: false, error: 'missing_messages' };
+          return {
+            ok: false,
+            error: 'missing_messages',
+            code: 'missing_messages',
+          };
         }
 
         const { warnings, blocked } = await checkAndLogIfBlocked(
@@ -560,7 +583,7 @@ export default defineBackground(() => {
           payload.params,
         );
         if (blocked) {
-          return { ok: false, error: 'rate_limited' };
+          return { ok: false, error: 'rate_limited', code: 'rate_limited' };
         }
 
         try {
@@ -589,13 +612,17 @@ export default defineBackground(() => {
             outcome: { ok: false, error: errorMessage },
             warnings,
           });
-          return { ok: false, error: errorMessage };
+          return {
+            ok: false,
+            error: errorMessage,
+            code: codeForErrorMessage(errorMessage),
+          };
         }
       }
 
       case 'getHistory': {
         if (!originGrants.has(origin)) {
-          return { ok: false, error: 'not_connected' };
+          return { ok: false, error: 'not_connected', code: 'not_connected' };
         }
         const entries = await listHistoryForOrigin(origin);
         return { ok: true, result: entries };
@@ -604,7 +631,7 @@ export default defineBackground(() => {
       case 'getProvider': {
         const provider = await resolveBoundProvider(origin);
         if (!provider) {
-          return { ok: false, error: 'not_connected' };
+          return { ok: false, error: 'not_connected', code: 'not_connected' };
         }
         return { ok: true, result: providerInfoFor(provider) };
       }
@@ -650,7 +677,7 @@ export default defineBackground(() => {
             warnings,
           });
           await handleBlocked(origin);
-          return { ok: false, error: 'rate_limited' };
+          return { ok: false, error: 'rate_limited', code: 'rate_limited' };
         }
 
         try {
@@ -682,7 +709,11 @@ export default defineBackground(() => {
             outcome: { ok: false, error: errorMessage },
             warnings,
           });
-          return { ok: false, error: errorMessage };
+          return {
+            ok: false,
+            error: errorMessage,
+            code: codeForErrorMessage(errorMessage),
+          };
         }
       }
 
@@ -716,7 +747,7 @@ export default defineBackground(() => {
             warnings,
           });
           await handleBlocked(origin);
-          return { ok: false, error: 'rate_limited' };
+          return { ok: false, error: 'rate_limited', code: 'rate_limited' };
         }
 
         try {
@@ -751,12 +782,16 @@ export default defineBackground(() => {
             outcome: { ok: false, error: errorMessage },
             warnings,
           });
-          return { ok: false, error: errorMessage };
+          return {
+            ok: false,
+            error: errorMessage,
+            code: codeForErrorMessage(errorMessage),
+          };
         }
       }
 
       default:
-        return { ok: false, error: 'unknown_method' };
+        return { ok: false, error: 'unknown_method', code: 'unknown_method' };
     }
   }
 });
