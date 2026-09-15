@@ -3,7 +3,7 @@
 // back into a future request — this is purely for the user (and, scoped to
 // its own origin, the site) to review what's been asked.
 
-import type { AquiliferChatParams } from '../aquilifer-protocol';
+import type { AquiliferChatParams } from '../public-api';
 import { createHistoryStore, type BaseHistoryEntry } from './shared';
 
 export interface HistoryEntry extends BaseHistoryEntry {

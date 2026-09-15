@@ -9,17 +9,20 @@ import {
   AQUILIFER_STREAM_CONTENT_SOURCE,
   AQUILIFER_STREAM_PAGE_SOURCE,
   type AnthropicMessagesStreamEventMessage,
-  type AquiliferChatParams,
   type AquiliferContentMessage,
   type AquiliferEventContentMessage,
-  type AquiliferGenericRequestPayload,
-  type AquiliferPageEvent,
   type AquiliferRequestPayload,
-  type AquiliferStreamChunk,
   type AquiliferStreamEventMessage,
   type OpenAIChatCompletionsStreamEventMessage,
 } from '../lib/aquilifer-protocol';
 import { createAsyncStreamQueue } from '../lib/async-stream-queue';
+import type {
+  AquiliferChatParams,
+  AquiliferError,
+  AquiliferGenericRequestPayload,
+  AquiliferPageEvent,
+  AquiliferStreamChunk,
+} from '../lib/public-api';
 import type {
   AnthropicMessagesRequest,
   AnthropicMessagesResponse,
@@ -28,39 +31,6 @@ import type {
   OpenAIChatCompletionsResponse,
   OpenAIChatCompletionsStreamChunk,
 } from '../lib/provider-interfaces';
-
-/** Thrown for a failed request/stream — `code` is only set for errors
- *  documented as stable (SPEC §9); everything else is `.message` only. */
-export interface AquiliferError extends Error {
-  code?: string;
-}
-
-declare global {
-  interface Window {
-    /**
-     * An `EventTarget` — subscribe to connection changes the normal way:
-     * `window.aquilifer.addEventListener('disconnect', () => {...})`.
-     * Events: `connect`, `disconnect`, `permissionChanged` (SPEC §5); the
-     * first two carry `event.detail` shaped like `getProvider()`'s result.
-     */
-    aquilifer?: EventTarget & {
-      request: (payload: AquiliferGenericRequestPayload) => Promise<unknown>;
-      stream: (params: AquiliferChatParams) => AsyncIterable<AquiliferStreamChunk>;
-      anthropicMessages: (
-        body: AnthropicMessagesRequest,
-      ) => Promise<AnthropicMessagesResponse>;
-      openaiChatCompletions: (
-        body: OpenAIChatCompletionsRequest,
-      ) => Promise<OpenAIChatCompletionsResponse>;
-      anthropicMessagesStream: (
-        body: AnthropicMessagesRequest,
-      ) => AsyncIterable<AnthropicMessagesStreamEvent>;
-      openaiChatCompletionsStream: (
-        body: OpenAIChatCompletionsRequest,
-      ) => AsyncIterable<OpenAIChatCompletionsStreamChunk>;
-    };
-  }
-}
 
 export default defineContentScript({
   matches: ['<all_urls>'],

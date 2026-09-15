@@ -23,34 +23,14 @@ import type {
   OpenAIChatCompletionsRequest,
   OpenAIChatCompletionsStreamChunk,
 } from './provider-interfaces';
-
-export type AquiliferMethod =
-  | 'connect'
-  | 'disconnect'
-  | 'chat'
-  | 'getHistory'
-  | 'getProvider'
-  | 'isConnected'
-  | 'anthropicMessages'
-  | 'openaiChatCompletions';
-
-export interface AquiliferChatParams {
-  messages: { role: 'user' | 'assistant' | 'system'; content: string }[];
-}
-
-/** Result shape for `getProvider` — visibility only, never a credential,
- *  the freeform `label`, `baseUrl`, or the provider's internal `id`. */
-export interface AquiliferProviderInfo {
-  type: 'anthropic' | 'openai-compatible';
-  model: string;
-}
-
-/** What `window.aquilifer.request()` accepts — the generic, provider-
- *  agnostic surface. Someone who just wants "ask the LLM something" never
- *  needs to see anything beyond this. */
-export type AquiliferGenericRequestPayload =
-  | { method: 'connect' | 'disconnect' | 'getHistory' | 'getProvider' | 'isConnected' }
-  | { method: 'chat'; params: AquiliferChatParams };
+// Public types (SPEC §5) imported back in from lib/public-api.ts only where
+// an internal wire-protocol shape below needs to reference them — that file
+// is the canonical source, this one never redefines or re-exports them.
+import type {
+  AquiliferChatParams,
+  AquiliferGenericRequestPayload,
+  AquiliferPageEvent,
+} from './public-api';
 
 /** The provider-specific interfaces (SPEC §5) — reached only through their
  *  own dedicated methods (`window.aquilifer.anthropicMessages`,
@@ -81,12 +61,6 @@ export interface AquiliferContentMessage {
   response: AquiliferResponsePayload;
 }
 
-/** What a website actually receives from each `for await` iteration of
- *  `window.aquilifer.stream(...)`. Small and extensible on purpose. */
-export interface AquiliferStreamChunk {
-  delta: string;
-}
-
 /** Internal wire event for one stream, sent background -> content -> page.
  *  Completion/failure use JS's own async-iterator semantics on the page
  *  side (the loop ends, or throws) rather than being data the site sees. */
@@ -115,20 +89,6 @@ export interface AquiliferStreamPortRequest {
 }
 
 export type AquiliferStreamPortEvent = AquiliferStreamEvent & { id: string };
-
-/** Pushed background -> content -> page whenever an origin's connection
- *  state changes, without the page having asked. `connect` fires on a 0->1
- *  transition (fresh connect or switch-approval from unconnected);
- *  `permissionChanged` fires when an already-connected origin's binding
- *  changes (e.g. a switch to a different provider); `disconnect` fires on
- *  a 1->0 transition (explicit disconnect, or revoked from Options). The
- *  detail on `connect`/`permissionChanged` is the same shape `getProvider`
- *  returns, so a page doesn't need a follow-up call just to see what it's
- *  now bound to. */
-export type AquiliferPageEvent =
-  | { name: 'connect'; detail: AquiliferProviderInfo }
-  | { name: 'permissionChanged'; detail: AquiliferProviderInfo }
-  | { name: 'disconnect' };
 
 export interface AquiliferEventContentMessage {
   source: typeof AQUILIFER_EVENT_CONTENT_SOURCE;

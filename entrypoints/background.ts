@@ -1,8 +1,5 @@
 import type {
   AnthropicMessagesStreamPortRequest,
-  AquiliferChatParams,
-  AquiliferPageEvent,
-  AquiliferProviderInfo,
   AquiliferProviderStreamEvent,
   AquiliferRequestPayload,
   AquiliferResponsePayload,
@@ -17,6 +14,11 @@ import {
   AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_PORT_NAME,
   AQUILIFER_STREAM_PORT_NAME,
 } from '../lib/aquilifer-protocol';
+import type {
+  AquiliferChatParams,
+  AquiliferPageEvent,
+  AquiliferProviderInfo,
+} from '../lib/public-api';
 import {
   appendHistoryEntry,
   countRecentEntries,

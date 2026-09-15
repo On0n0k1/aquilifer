@@ -3,7 +3,7 @@
 // options page to verify a provider before saving it — never from the
 // content script or injected script, which never see the credential.
 
-import type { AquiliferChatParams } from '../aquilifer-protocol';
+import type { AquiliferChatParams } from '../public-api';
 import type { AnthropicProvider } from '../providers';
 import { describeError, readSseDataLines, type ChatResult } from './shared';
 

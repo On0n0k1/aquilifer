@@ -1,4 +1,4 @@
-import type { AquiliferChatParams } from '../aquilifer-protocol';
+import type { AquiliferChatParams } from '../public-api';
 import type { ProviderConfig } from '../providers';
 import { callAnthropic, streamAnthropic } from './anthropic';
 import { callOpenAICompatible, streamOpenAICompatible } from './openai-compatible';

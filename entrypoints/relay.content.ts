@@ -13,7 +13,6 @@ import {
   AQUILIFER_STREAM_PAGE_SOURCE,
   AQUILIFER_STREAM_PORT_NAME,
   type AnthropicMessagesStreamStartMessage,
-  type AquiliferPageEvent,
   type AquiliferPageMessage,
   type AquiliferProviderStreamEvent,
   type AquiliferResponsePayload,
@@ -24,6 +23,7 @@ import {
   type OpenAIChatCompletionsStreamStartMessage,
 } from '../lib/aquilifer-protocol';
 import { AQUILIFER_ERRORS, streamErrorEvent } from '../lib/errors';
+import type { AquiliferPageEvent } from '../lib/public-api';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
