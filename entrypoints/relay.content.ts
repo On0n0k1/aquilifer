@@ -14,6 +14,7 @@ import {
   type AquiliferStreamPortRequest,
   type AquiliferStreamStartMessage,
 } from '../lib/aquilifer-protocol';
+import { AQUILIFER_ERRORS, streamErrorEvent } from '../lib/errors';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -81,11 +82,7 @@ export default defineContentScript({
       port.onDisconnect.addListener(() => {
         // Background restarted or otherwise dropped the port before sending
         // a terminal event — don't leave the page's stream hanging forever.
-        post({
-          type: 'error',
-          error: 'stream_disconnected',
-          code: 'stream_disconnected',
-        });
+        post(streamErrorEvent(AQUILIFER_ERRORS.STREAM_DISCONNECTED));
       });
 
       const request: AquiliferStreamPortRequest = { id, params };

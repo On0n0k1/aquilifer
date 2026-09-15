@@ -1,3 +1,5 @@
+import { PROVIDER_ERROR_PREFIX } from '../errors';
+
 export interface ChatResult {
   text: string;
   /** The model the provider's own response reports having used, if any. */
@@ -6,7 +8,7 @@ export interface ChatResult {
 
 export async function describeError(response: Response): Promise<string> {
   const body = await response.text().catch(() => '');
-  return `provider_error_${response.status}${body ? `: ${body.slice(0, 200)}` : ''}`;
+  return `${PROVIDER_ERROR_PREFIX}${response.status}${body ? `: ${body.slice(0, 200)}` : ''}`;
 }
 
 /**

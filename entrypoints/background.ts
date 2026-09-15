@@ -19,6 +19,14 @@ import {
 } from '../lib/history/generic';
 import * as anthropicMessagesHistory from '../lib/history/anthropic-messages';
 import * as openaiChatCompletionsHistory from '../lib/history/openai-chat-completions';
+import {
+  AQUILIFER_ERRORS,
+  dynamicErrorResult,
+  dynamicStreamErrorEvent,
+  errorResult,
+  streamErrorEvent,
+  type AquiliferErrorCode,
+} from '../lib/errors';
 import { isInternalMessage, type InternalMessage } from '../lib/internal-protocol';
 import { runChat, runChatStream } from '../lib/llm-clients';
 import {
@@ -40,7 +48,7 @@ import {
 
 type ApprovalOutcome =
   | { approved: true; providerId: string }
-  | { approved: false; reason: string; code?: string };
+  | { approved: false; reason: AquiliferErrorCode; code: AquiliferErrorCode };
 
 export default defineBackground(() => {
   // origin -> bound providerId, chosen by the user in the approval popup.
@@ -56,8 +64,7 @@ export default defineBackground(() => {
       /** True only for a switch request where zero providers of the
        *  required type exist — a more specific reason than a plain denial. */
       noProviderOfType: boolean;
-      deniedReason: string;
-      deniedCode?: string;
+      deniedReason: AquiliferErrorCode;
     }
   >();
   const windowIdToOrigin = new Map<number, string>();
@@ -130,32 +137,14 @@ export default defineBackground(() => {
     const pending = pendingApprovals.get(origin);
     if (!pending) return;
     pendingApprovals.delete(origin);
-    pending.resolve(
-      pending.noProviderOfType
-        ? {
-            approved: false,
-            reason: 'no_provider_of_type',
-            code: 'no_provider_of_type',
-          }
-        : {
-            approved: false,
-            reason: pending.deniedReason,
-            code: pending.deniedCode,
-          },
-    );
+    const reason = pending.noProviderOfType
+      ? AQUILIFER_ERRORS.NO_PROVIDER_OF_TYPE
+      : pending.deniedReason;
+    pending.resolve({ approved: false, reason, code: reason });
   }
 
   function providerInfoFor(provider: ProviderConfig): AquiliferProviderInfo {
     return { type: provider.type, model: provider.resolvedModel ?? provider.model };
-  }
-
-  /** Stable `.code` for an error message (SPEC §5, §9) — every fixed
-   *  identifier is its own code; the one message shape that carries dynamic
-   *  detail text (`provider_error_<status>: <body>`) normalizes down to a
-   *  fixed `provider_error` code, so callers never need to string-match
-   *  beyond `.code`. */
-  function codeForErrorMessage(message: string): string {
-    return message.startsWith('provider_error_') ? 'provider_error' : message;
   }
 
   /** Pushes a page event (SPEC §5) to every open tab of `origin` — the tab
@@ -220,8 +209,9 @@ export default defineBackground(() => {
       pendingApprovals.set(origin, {
         resolve,
         noProviderOfType: Boolean(options.requiredType) && matching.length === 0,
-        deniedReason: options.requiredType ? 'switch_denied' : 'connect_denied',
-        deniedCode: options.requiredType ? 'switch_denied' : 'connect_denied',
+        deniedReason: options.requiredType
+          ? AQUILIFER_ERRORS.SWITCH_DENIED
+          : AQUILIFER_ERRORS.CONNECT_DENIED,
       });
 
       const params = new URLSearchParams({ origin });
@@ -277,7 +267,8 @@ export default defineBackground(() => {
     origin: string,
     requiredType: ProviderType,
   ): Promise<
-    { ok: true; provider: ProviderConfig } | { ok: false; error: string; code?: string }
+    | { ok: true; provider: ProviderConfig }
+    | { ok: false; error: string; code: string }
   > {
     const bound = await resolveBoundProvider(origin);
     if (bound && bound.type === requiredType) {
@@ -285,7 +276,7 @@ export default defineBackground(() => {
     }
 
     if (pendingApprovals.has(origin)) {
-      return { ok: false, error: 'connect_pending', code: 'connect_pending' };
+      return errorResult(AQUILIFER_ERRORS.CONNECT_PENDING);
     }
 
     const outcome = await openApprovalPopup(origin, {
@@ -303,11 +294,7 @@ export default defineBackground(() => {
     const providers = await listProviders();
     const provider = providers.find((p) => p.id === outcome.providerId);
     if (!provider) {
-      return {
-        ok: false,
-        error: 'provider_unavailable',
-        code: 'provider_unavailable',
-      };
+      return errorResult(AQUILIFER_ERRORS.PROVIDER_UNAVAILABLE);
     }
 
     // `bound` truthy means this was a switch (already connected, just to a
@@ -376,7 +363,7 @@ export default defineBackground(() => {
     const globalBlocked = globalCount >= settings.global.threshold;
 
     const blocked = perInterfaceBlocked || globalBlocked;
-    if (blocked) warnings.push('rate_limited');
+    if (blocked) warnings.push(AQUILIFER_ERRORS.RATE_LIMITED);
 
     return { warnings, blocked };
   }
@@ -428,7 +415,7 @@ export default defineBackground(() => {
         providerId: provider.id,
         providerLabel: provider.label,
         messages: params.messages,
-        outcome: { ok: false, error: 'rate_limited' },
+        outcome: { ok: false, error: AQUILIFER_ERRORS.RATE_LIMITED },
         warnings,
       });
       await handleBlocked(origin);
@@ -451,22 +438,18 @@ export default defineBackground(() => {
     }
 
     if (!origin) {
-      send({ type: 'error', error: 'unknown_origin', code: 'unknown_origin' });
+      send(streamErrorEvent(AQUILIFER_ERRORS.UNKNOWN_ORIGIN));
       return;
     }
     await originGrantsLoaded;
 
     const provider = await resolveBoundProvider(origin);
     if (!provider) {
-      send({ type: 'error', error: 'not_connected', code: 'not_connected' });
+      send(streamErrorEvent(AQUILIFER_ERRORS.NOT_CONNECTED));
       return;
     }
     if (!params?.messages?.length) {
-      send({
-        type: 'error',
-        error: 'missing_messages',
-        code: 'missing_messages',
-      });
+      send(streamErrorEvent(AQUILIFER_ERRORS.MISSING_MESSAGES));
       return;
     }
 
@@ -476,7 +459,7 @@ export default defineBackground(() => {
       params,
     );
     if (blocked) {
-      send({ type: 'error', error: 'rate_limited', code: 'rate_limited' });
+      send(streamErrorEvent(AQUILIFER_ERRORS.RATE_LIMITED));
       return;
     }
 
@@ -499,7 +482,7 @@ export default defineBackground(() => {
       send({ type: 'done' });
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : 'chat_failed';
+        error instanceof Error ? error.message : AQUILIFER_ERRORS.CHAT_FAILED;
       await appendHistoryEntry({
         id: crypto.randomUUID(),
         origin,
@@ -510,11 +493,7 @@ export default defineBackground(() => {
         outcome: { ok: false, error: errorMessage },
         warnings,
       });
-      send({
-        type: 'error',
-        error: errorMessage,
-        code: codeForErrorMessage(errorMessage),
-      });
+      send(dynamicStreamErrorEvent(errorMessage));
     }
   }
 
@@ -523,7 +502,7 @@ export default defineBackground(() => {
     origin: string | undefined,
   ): Promise<AquiliferResponsePayload> {
     if (!origin) {
-      return { ok: false, error: 'unknown_origin', code: 'unknown_origin' };
+      return errorResult(AQUILIFER_ERRORS.UNKNOWN_ORIGIN);
     }
     await originGrantsLoaded;
 
@@ -533,7 +512,7 @@ export default defineBackground(() => {
           return { ok: true, result: { connected: true } };
         }
         if (pendingApprovals.has(origin)) {
-          return { ok: false, error: 'connect_pending', code: 'connect_pending' };
+          return errorResult(AQUILIFER_ERRORS.CONNECT_PENDING);
         }
 
         const outcome = await openApprovalPopup(origin);
@@ -551,11 +530,7 @@ export default defineBackground(() => {
           }
           return { ok: true, result: { connected: true } };
         }
-        return {
-          ok: false,
-          error: outcome.reason,
-          ...(outcome.code ? { code: outcome.code } : {}),
-        };
+        return { ok: false, error: outcome.reason, code: outcome.code };
       }
 
       case 'disconnect':
@@ -567,14 +542,10 @@ export default defineBackground(() => {
       case 'chat': {
         const provider = await resolveBoundProvider(origin);
         if (!provider) {
-          return { ok: false, error: 'not_connected', code: 'not_connected' };
+          return errorResult(AQUILIFER_ERRORS.NOT_CONNECTED);
         }
         if (!payload.params?.messages?.length) {
-          return {
-            ok: false,
-            error: 'missing_messages',
-            code: 'missing_messages',
-          };
+          return errorResult(AQUILIFER_ERRORS.MISSING_MESSAGES);
         }
 
         const { warnings, blocked } = await checkAndLogIfBlocked(
@@ -583,7 +554,7 @@ export default defineBackground(() => {
           payload.params,
         );
         if (blocked) {
-          return { ok: false, error: 'rate_limited', code: 'rate_limited' };
+          return errorResult(AQUILIFER_ERRORS.RATE_LIMITED);
         }
 
         try {
@@ -601,7 +572,7 @@ export default defineBackground(() => {
           return { ok: true, result: { message: result.text } };
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : 'chat_failed';
+            error instanceof Error ? error.message : AQUILIFER_ERRORS.CHAT_FAILED;
           await appendHistoryEntry({
             id: crypto.randomUUID(),
             origin,
@@ -612,17 +583,13 @@ export default defineBackground(() => {
             outcome: { ok: false, error: errorMessage },
             warnings,
           });
-          return {
-            ok: false,
-            error: errorMessage,
-            code: codeForErrorMessage(errorMessage),
-          };
+          return dynamicErrorResult(errorMessage);
         }
       }
 
       case 'getHistory': {
         if (!originGrants.has(origin)) {
-          return { ok: false, error: 'not_connected', code: 'not_connected' };
+          return errorResult(AQUILIFER_ERRORS.NOT_CONNECTED);
         }
         const entries = await listHistoryForOrigin(origin);
         return { ok: true, result: entries };
@@ -631,7 +598,7 @@ export default defineBackground(() => {
       case 'getProvider': {
         const provider = await resolveBoundProvider(origin);
         if (!provider) {
-          return { ok: false, error: 'not_connected', code: 'not_connected' };
+          return errorResult(AQUILIFER_ERRORS.NOT_CONNECTED);
         }
         return { ok: true, result: providerInfoFor(provider) };
       }
@@ -650,11 +617,7 @@ export default defineBackground(() => {
       case 'anthropicMessages': {
         const resolved = await ensureProviderType(origin, 'anthropic');
         if (!resolved.ok) {
-          return {
-            ok: false,
-            error: resolved.error,
-            ...(resolved.code ? { code: resolved.code } : {}),
-          };
+          return { ok: false, error: resolved.error, code: resolved.code };
         }
         const provider = resolved.provider as AnthropicProvider;
         const fullRequestJson = JSON.stringify(payload.params);
@@ -673,11 +636,11 @@ export default defineBackground(() => {
             providerId: provider.id,
             providerLabel: provider.label,
             requestSummary,
-            outcome: { ok: false, error: 'rate_limited' },
+            outcome: { ok: false, error: AQUILIFER_ERRORS.RATE_LIMITED },
             warnings,
           });
           await handleBlocked(origin);
-          return { ok: false, error: 'rate_limited', code: 'rate_limited' };
+          return errorResult(AQUILIFER_ERRORS.RATE_LIMITED);
         }
 
         try {
@@ -698,7 +661,7 @@ export default defineBackground(() => {
           return { ok: true, result };
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : 'chat_failed';
+            error instanceof Error ? error.message : AQUILIFER_ERRORS.CHAT_FAILED;
           await anthropicMessagesHistory.appendHistoryEntry({
             id: crypto.randomUUID(),
             origin,
@@ -709,22 +672,14 @@ export default defineBackground(() => {
             outcome: { ok: false, error: errorMessage },
             warnings,
           });
-          return {
-            ok: false,
-            error: errorMessage,
-            code: codeForErrorMessage(errorMessage),
-          };
+          return dynamicErrorResult(errorMessage);
         }
       }
 
       case 'openaiChatCompletions': {
         const resolved = await ensureProviderType(origin, 'openai-compatible');
         if (!resolved.ok) {
-          return {
-            ok: false,
-            error: resolved.error,
-            ...(resolved.code ? { code: resolved.code } : {}),
-          };
+          return { ok: false, error: resolved.error, code: resolved.code };
         }
         const provider = resolved.provider as OpenAICompatibleProvider;
         const fullRequestJson = JSON.stringify(payload.params);
@@ -743,11 +698,11 @@ export default defineBackground(() => {
             providerId: provider.id,
             providerLabel: provider.label,
             requestSummary,
-            outcome: { ok: false, error: 'rate_limited' },
+            outcome: { ok: false, error: AQUILIFER_ERRORS.RATE_LIMITED },
             warnings,
           });
           await handleBlocked(origin);
-          return { ok: false, error: 'rate_limited', code: 'rate_limited' };
+          return errorResult(AQUILIFER_ERRORS.RATE_LIMITED);
         }
 
         try {
@@ -771,7 +726,7 @@ export default defineBackground(() => {
           return { ok: true, result };
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : 'chat_failed';
+            error instanceof Error ? error.message : AQUILIFER_ERRORS.CHAT_FAILED;
           await openaiChatCompletionsHistory.appendHistoryEntry({
             id: crypto.randomUUID(),
             origin,
@@ -782,16 +737,12 @@ export default defineBackground(() => {
             outcome: { ok: false, error: errorMessage },
             warnings,
           });
-          return {
-            ok: false,
-            error: errorMessage,
-            code: codeForErrorMessage(errorMessage),
-          };
+          return dynamicErrorResult(errorMessage);
         }
       }
 
       default:
-        return { ok: false, error: 'unknown_method', code: 'unknown_method' };
+        return errorResult(AQUILIFER_ERRORS.UNKNOWN_METHOD);
     }
   }
 });

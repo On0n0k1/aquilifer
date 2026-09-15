@@ -6,6 +6,7 @@
 // runtime client is never used, so this costs nothing in the built bundle.
 
 import type Anthropic from '@anthropic-ai/sdk';
+import { AQUILIFER_ERRORS } from '../errors';
 import type { AnthropicProvider } from '../providers';
 import { describeError } from '../llm-clients/shared';
 
@@ -25,7 +26,7 @@ export async function callAnthropicMessages(
   // postMessage/sendMessage is untyped JSON — a caller ignoring our types
   // could still send it, so this is a real runtime guard, not a formality.
   if ((body as { stream?: unknown }).stream) {
-    throw new Error('streaming_not_supported');
+    throw new Error(AQUILIFER_ERRORS.STREAMING_NOT_SUPPORTED);
   }
 
   const response = await fetch('https://api.anthropic.com/v1/messages', {

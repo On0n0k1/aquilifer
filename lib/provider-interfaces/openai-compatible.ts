@@ -4,6 +4,7 @@
 // `openai` package via `import type` only, no runtime SDK usage.
 
 import type OpenAI from 'openai';
+import { AQUILIFER_ERRORS } from '../errors';
 import type { OpenAICompatibleProvider } from '../providers';
 import { describeError } from '../llm-clients/shared';
 
@@ -18,7 +19,7 @@ export async function callOpenAIChatCompletions(
   body: OpenAIChatCompletionsRequest,
 ): Promise<OpenAIChatCompletionsResponse> {
   if ((body as { stream?: unknown }).stream) {
-    throw new Error('streaming_not_supported');
+    throw new Error(AQUILIFER_ERRORS.STREAMING_NOT_SUPPORTED);
   }
 
   const base = provider.baseUrl.replace(/\/+$/, '');
