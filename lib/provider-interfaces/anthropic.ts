@@ -8,15 +8,32 @@
 import type Anthropic from '@anthropic-ai/sdk';
 import { AQUILIFER_ERRORS } from '../errors';
 import type { AnthropicProvider } from '../providers';
-import { describeError } from '../llm-clients/shared';
+import { describeError, readSseDataLines } from '../llm-clients/shared';
 
 const ANTHROPIC_API_VERSION = '2023-06-01';
+const ANTHROPIC_MESSAGES_URL = 'https://api.anthropic.com/v1/messages';
 
 export type AnthropicMessagesRequest = Omit<
   Anthropic.MessageCreateParamsNonStreaming,
   'model' | 'stream'
 >;
 export type AnthropicMessagesResponse = Anthropic.Message;
+/** The raw event shape Anthropic's own SDK yields from a streaming call —
+ *  forwarded to the page as-is (SPEC §5), not simplified to `{ delta }`
+ *  like the generic interface's `stream()`, so a caller already familiar
+ *  with the real Messages API streaming shape gets zero-friction parity. */
+export type AnthropicMessagesStreamEvent = Anthropic.MessageStreamEvent;
+
+function requestHeaders(provider: AnthropicProvider) {
+  return {
+    'content-type': 'application/json',
+    'x-api-key': provider.apiKey,
+    'anthropic-version': ANTHROPIC_API_VERSION,
+    // Same requirement as the generic client (lib/llm-clients/anthropic.ts)
+    // — required for any request carrying a browser-style Origin header.
+    'anthropic-dangerous-direct-browser-access': 'true',
+  };
+}
 
 export async function callAnthropicMessages(
   provider: AnthropicProvider,
@@ -29,20 +46,46 @@ export async function callAnthropicMessages(
     throw new Error(AQUILIFER_ERRORS.STREAMING_NOT_SUPPORTED);
   }
 
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
+  const response = await fetch(ANTHROPIC_MESSAGES_URL, {
     method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-api-key': provider.apiKey,
-      'anthropic-version': ANTHROPIC_API_VERSION,
-      // Same requirement as the generic client (lib/llm-clients/anthropic.ts)
-      // — required for any request carrying a browser-style Origin header.
-      'anthropic-dangerous-direct-browser-access': 'true',
-    },
+    headers: requestHeaders(provider),
     body: JSON.stringify({ ...body, model: provider.model, stream: false }),
   });
 
   if (!response.ok) throw new Error(await describeError(response));
 
   return (await response.json()) as AnthropicMessagesResponse;
+}
+
+export async function streamAnthropicMessages(
+  provider: AnthropicProvider,
+  body: AnthropicMessagesRequest,
+  onEvent: (event: AnthropicMessagesStreamEvent) => void,
+): Promise<void> {
+  const response = await fetch(ANTHROPIC_MESSAGES_URL, {
+    method: 'POST',
+    headers: requestHeaders(provider),
+    body: JSON.stringify({ ...body, model: provider.model, stream: true }),
+  });
+
+  if (!response.ok) throw new Error(await describeError(response));
+  if (!response.body) throw new Error('empty_stream_body');
+
+  for await (const raw of readSseDataLines(response.body)) {
+    let event: { type: string; error?: unknown };
+    try {
+      event = JSON.parse(raw);
+    } catch {
+      continue;
+    }
+    // Anthropic sends mid-stream failures as an `error`-type SSE event
+    // rather than a non-2xx HTTP status — surfaced as a real thrown error
+    // (matching lib/llm-clients/anthropic.ts's generic streamer) so a
+    // `for await` consumer's error handling doesn't have to special-case
+    // one particular "chunk" that's actually a failure.
+    if (event.type === 'error') {
+      throw new Error(`provider_stream_error: ${JSON.stringify(event.error)}`);
+    }
+    onEvent(event as AnthropicMessagesStreamEvent);
+  }
 }

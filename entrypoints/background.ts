@@ -1,15 +1,20 @@
 import type {
+  AnthropicMessagesStreamPortRequest,
   AquiliferChatParams,
   AquiliferPageEvent,
   AquiliferProviderInfo,
+  AquiliferProviderStreamEvent,
   AquiliferRequestPayload,
   AquiliferResponsePayload,
   AquiliferStreamEvent,
   AquiliferStreamPortEvent,
   AquiliferStreamPortRequest,
+  OpenAIChatCompletionsStreamPortRequest,
 } from '../lib/aquilifer-protocol';
 import {
+  AQUILIFER_ANTHROPIC_MESSAGES_STREAM_PORT_NAME,
   AQUILIFER_EVENTS_PORT_NAME,
+  AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_PORT_NAME,
   AQUILIFER_STREAM_PORT_NAME,
 } from '../lib/aquilifer-protocol';
 import {
@@ -32,6 +37,8 @@ import { runChat, runChatStream } from '../lib/llm-clients';
 import {
   callAnthropicMessages,
   callOpenAIChatCompletions,
+  streamAnthropicMessages,
+  streamOpenAIChatCompletions,
 } from '../lib/provider-interfaces';
 import {
   listProviders,
@@ -99,6 +106,26 @@ export default defineBackground(() => {
     if (port.name === AQUILIFER_STREAM_PORT_NAME) {
       port.onMessage.addListener((message) =>
         handleStreamRequest(port, message as AquiliferStreamPortRequest),
+      );
+      return;
+    }
+
+    if (port.name === AQUILIFER_ANTHROPIC_MESSAGES_STREAM_PORT_NAME) {
+      port.onMessage.addListener((message) =>
+        handleAnthropicMessagesStreamRequest(
+          port,
+          message as AnthropicMessagesStreamPortRequest,
+        ),
+      );
+      return;
+    }
+
+    if (port.name === AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_PORT_NAME) {
+      port.onMessage.addListener((message) =>
+        handleOpenAIChatCompletionsStreamRequest(
+          port,
+          message as OpenAIChatCompletionsStreamPortRequest,
+        ),
       );
       return;
     }
@@ -495,6 +522,160 @@ export default defineBackground(() => {
       });
       send(dynamicStreamErrorEvent(errorMessage));
     }
+  }
+
+  /**
+   * Shared by both provider-specific streaming Ports (SPEC §5, §10) —
+   * gated by the same switch-approval flow and per-interface rate limiting
+   * as their non-streaming counterparts (`anthropicMessages`/
+   * `openaiChatCompletions`). Each provider's raw stream event/chunk is
+   * forwarded to the page untouched (`chunk`), not simplified to `{ delta }`
+   * like the generic interface's `stream()` — the whole point is zero
+   * friction for a caller who already knows that provider's real streaming
+   * shape. The history log can't meaningfully summarize a stream of raw
+   * provider events the way the non-streaming call's single JSON response
+   * can, so it just records how many arrived.
+   */
+  async function handleProviderStreamRequest<TParams, TChunk>(
+    port: ReturnType<typeof browser.runtime.connect>,
+    message: { id: string; params: TParams },
+    requiredType: ProviderType,
+    interfaceName: RateLimitInterface,
+    history: {
+      appendHistoryEntry: (entry: {
+        id: string;
+        origin: string;
+        timestamp: number;
+        providerId: string;
+        providerLabel: string;
+        requestSummary: string;
+        outcome:
+          | { ok: true; responseSummary: string }
+          | { ok: false; error: string };
+        warnings?: string[];
+      }) => Promise<void>;
+    },
+    streamCall: (
+      provider: ProviderConfig,
+      params: TParams,
+      onChunk: (chunk: TChunk) => void,
+    ) => Promise<void>,
+  ) {
+    const { id, params } = message;
+    const sender = port.sender;
+    const origin =
+      sender?.origin ?? (sender?.url ? new URL(sender.url).origin : undefined);
+
+    function send(event: AquiliferProviderStreamEvent<TChunk>) {
+      port.postMessage({ ...event, id });
+    }
+
+    if (!origin) {
+      send(streamErrorEvent(AQUILIFER_ERRORS.UNKNOWN_ORIGIN));
+      return;
+    }
+    await originGrantsLoaded;
+
+    const resolved = await ensureProviderType(origin, requiredType);
+    if (!resolved.ok) {
+      send({ type: 'error', error: resolved.error, code: resolved.code });
+      return;
+    }
+    const provider = resolved.provider;
+
+    const requestJson = JSON.stringify(params);
+    const requestSummary = requestJson.slice(0, 500);
+
+    const { warnings, blocked } = await computeRateLimitOutcome(
+      origin,
+      interfaceName,
+      requestJson.length,
+    );
+    if (blocked) {
+      await history.appendHistoryEntry({
+        id: crypto.randomUUID(),
+        origin,
+        timestamp: Date.now(),
+        providerId: provider.id,
+        providerLabel: provider.label,
+        requestSummary,
+        outcome: { ok: false, error: AQUILIFER_ERRORS.RATE_LIMITED },
+        warnings,
+      });
+      await handleBlocked(origin);
+      send(streamErrorEvent(AQUILIFER_ERRORS.RATE_LIMITED));
+      return;
+    }
+
+    let chunkCount = 0;
+    try {
+      await streamCall(provider, params, (chunk) => {
+        chunkCount += 1;
+        send({ type: 'chunk', chunk });
+      });
+      await history.appendHistoryEntry({
+        id: crypto.randomUUID(),
+        origin,
+        timestamp: Date.now(),
+        providerId: provider.id,
+        providerLabel: provider.label,
+        requestSummary,
+        outcome: {
+          ok: true,
+          responseSummary: `[streamed ${chunkCount} events]`,
+        },
+        warnings,
+      });
+      send({ type: 'done' });
+    } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : AQUILIFER_ERRORS.CHAT_FAILED;
+      await history.appendHistoryEntry({
+        id: crypto.randomUUID(),
+        origin,
+        timestamp: Date.now(),
+        providerId: provider.id,
+        providerLabel: provider.label,
+        requestSummary,
+        outcome: { ok: false, error: errorMessage },
+        warnings,
+      });
+      send(dynamicStreamErrorEvent(errorMessage));
+    }
+  }
+
+  async function handleAnthropicMessagesStreamRequest(
+    port: ReturnType<typeof browser.runtime.connect>,
+    message: AnthropicMessagesStreamPortRequest,
+  ) {
+    await handleProviderStreamRequest(
+      port,
+      message,
+      'anthropic',
+      'anthropicMessages',
+      anthropicMessagesHistory,
+      (provider, params, onChunk) =>
+        streamAnthropicMessages(provider as AnthropicProvider, params, onChunk),
+    );
+  }
+
+  async function handleOpenAIChatCompletionsStreamRequest(
+    port: ReturnType<typeof browser.runtime.connect>,
+    message: OpenAIChatCompletionsStreamPortRequest,
+  ) {
+    await handleProviderStreamRequest(
+      port,
+      message,
+      'openai-compatible',
+      'openaiChatCompletions',
+      openaiChatCompletionsHistory,
+      (provider, params, onChunk) =>
+        streamOpenAIChatCompletions(
+          provider as OpenAICompatibleProvider,
+          params,
+          onChunk,
+        ),
+    );
   }
 
   async function handleRequest(

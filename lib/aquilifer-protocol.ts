@@ -19,7 +19,9 @@ export const AQUILIFER_EVENTS_PORT_NAME = 'aquilifer-events';
 
 import type {
   AnthropicMessagesRequest,
+  AnthropicMessagesStreamEvent,
   OpenAIChatCompletionsRequest,
+  OpenAIChatCompletionsStreamChunk,
 } from './provider-interfaces';
 
 export type AquiliferMethod =
@@ -131,4 +133,83 @@ export type AquiliferPageEvent =
 export interface AquiliferEventContentMessage {
   source: typeof AQUILIFER_EVENT_CONTENT_SOURCE;
   event: AquiliferPageEvent;
+}
+
+// Provider-specific streaming (SPEC §5, §10) — `anthropicMessagesStream()`
+// and `openaiChatCompletionsStream()`. Each gets its own dedicated Port,
+// separate from the generic stream Port above and from each other, so a
+// future breaking change to one interface's streaming shape can never
+// ripple into another's channel.
+export const AQUILIFER_ANTHROPIC_MESSAGES_STREAM_PAGE_SOURCE =
+  'aquilifer-anthropic-messages-stream-page';
+export const AQUILIFER_ANTHROPIC_MESSAGES_STREAM_CONTENT_SOURCE =
+  'aquilifer-anthropic-messages-stream-content';
+export const AQUILIFER_ANTHROPIC_MESSAGES_STREAM_PORT_NAME =
+  'aquilifer-anthropic-messages-stream';
+
+export const AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_PAGE_SOURCE =
+  'aquilifer-openai-chat-completions-stream-page';
+export const AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_CONTENT_SOURCE =
+  'aquilifer-openai-chat-completions-stream-content';
+export const AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_PORT_NAME =
+  'aquilifer-openai-chat-completions-stream';
+
+/** Shared shape for a provider-specific interface's streamed event,
+ *  parameterized by that interface's own raw chunk/event type — Anthropic's
+ *  and OpenAI's streaming shapes are structurally unrelated, so `chunk`
+ *  carries the provider's own event object untouched rather than being
+ *  simplified to `{ delta }` like the generic `stream()`, keeping friction
+ *  at zero for a caller who already knows the real SDK's streaming shape. */
+export type AquiliferProviderStreamEvent<TChunk> =
+  | { type: 'chunk'; chunk: TChunk }
+  | { type: 'done' }
+  | { type: 'error'; error: string; code?: string };
+
+export type AquiliferProviderStreamPortEvent<TChunk> =
+  AquiliferProviderStreamEvent<TChunk> & { id: string };
+
+/** What the content script sends over a provider stream's dedicated Port
+ *  when starting it — no `method` needed, the Port is already stream- and
+ *  interface-specific. */
+export interface AquiliferProviderStreamPortRequest<TParams> {
+  id: string;
+  params: TParams;
+}
+
+export type AnthropicMessagesStreamEventPayload =
+  AquiliferProviderStreamEvent<AnthropicMessagesStreamEvent>;
+export type AnthropicMessagesStreamPortEvent =
+  AquiliferProviderStreamPortEvent<AnthropicMessagesStreamEvent>;
+export type AnthropicMessagesStreamPortRequest =
+  AquiliferProviderStreamPortRequest<AnthropicMessagesRequest>;
+
+export interface AnthropicMessagesStreamStartMessage {
+  source: typeof AQUILIFER_ANTHROPIC_MESSAGES_STREAM_PAGE_SOURCE;
+  id: string;
+  params: AnthropicMessagesRequest;
+}
+
+export interface AnthropicMessagesStreamEventMessage {
+  source: typeof AQUILIFER_ANTHROPIC_MESSAGES_STREAM_CONTENT_SOURCE;
+  id: string;
+  event: AnthropicMessagesStreamEventPayload;
+}
+
+export type OpenAIChatCompletionsStreamEventPayload =
+  AquiliferProviderStreamEvent<OpenAIChatCompletionsStreamChunk>;
+export type OpenAIChatCompletionsStreamPortEvent =
+  AquiliferProviderStreamPortEvent<OpenAIChatCompletionsStreamChunk>;
+export type OpenAIChatCompletionsStreamPortRequest =
+  AquiliferProviderStreamPortRequest<OpenAIChatCompletionsRequest>;
+
+export interface OpenAIChatCompletionsStreamStartMessage {
+  source: typeof AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_PAGE_SOURCE;
+  id: string;
+  params: OpenAIChatCompletionsRequest;
+}
+
+export interface OpenAIChatCompletionsStreamEventMessage {
+  source: typeof AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_CONTENT_SOURCE;
+  id: string;
+  event: OpenAIChatCompletionsStreamEventPayload;
 }
