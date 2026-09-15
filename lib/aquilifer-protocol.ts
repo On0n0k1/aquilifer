@@ -28,6 +28,7 @@ export type AquiliferMethod =
   | 'chat'
   | 'getHistory'
   | 'getProvider'
+  | 'isConnected'
   | 'anthropicMessages'
   | 'openaiChatCompletions';
 
@@ -46,7 +47,7 @@ export interface AquiliferProviderInfo {
  *  agnostic surface. Someone who just wants "ask the LLM something" never
  *  needs to see anything beyond this. */
 export type AquiliferGenericRequestPayload =
-  | { method: 'connect' | 'disconnect' | 'getHistory' | 'getProvider' }
+  | { method: 'connect' | 'disconnect' | 'getHistory' | 'getProvider' | 'isConnected' }
   | { method: 'chat'; params: AquiliferChatParams };
 
 /** The provider-specific interfaces (SPEC §5) — reached only through their

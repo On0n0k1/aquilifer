@@ -609,6 +609,15 @@ export default defineBackground(() => {
         return { ok: true, result: providerInfoFor(provider) };
       }
 
+      // Read-only status check (SPEC §5, §9) — unlike every other method
+      // here, "not connected" is a normal successful outcome, not an error,
+      // and this must never open the approval popup (fallback callers rely
+      // on that to probe silently). resolveBoundProvider() is a pure lookup.
+      case 'isConnected': {
+        const provider = await resolveBoundProvider(origin);
+        return { ok: true, result: { connected: Boolean(provider) } };
+      }
+
       // Provider-specific interfaces (SPEC §5), gated by connection/switch
       // approval and the same two-tier rate limiting as `chat` (§4).
       case 'anthropicMessages': {
