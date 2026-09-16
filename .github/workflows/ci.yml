@@ -49,3 +49,33 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  # Bumps package.json's version, generates CHANGELOG.md, and creates a git
+  # tag + GitHub Release from Conventional Commits (SPEC — versioning) —
+  # only after `test` passes, and only on a real push to main (never on
+  # PRs, never on other branches). Deliberately does NOT publish anywhere:
+  # @semantic-release/npm runs with npmPublish:false (this package.json is
+  # never meant for the npm registry — see NPM-PACKAGE-SPEC.md for the
+  # unrelated future package that is), and nothing here touches the Chrome
+  # Web Store, which stays a manual, deliberate upload.
+  release:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # semantic-release needs the full commit history since the last
+          # release tag to analyze commits — the default shallow clone only
+          # has the latest commit.
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
