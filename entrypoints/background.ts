@@ -57,6 +57,11 @@ import {
   getRateLimitSettings,
   type RateLimitInterface,
 } from '../lib/rate-limits';
+import {
+  isEncryptedApiKey,
+  isVaultUnlocked,
+  resolveApiKey,
+} from '../lib/vault';
 
 type ApprovalOutcome =
   | { approved: true; providerId: string }
@@ -85,6 +90,15 @@ export default defineBackground(() => {
     string,
     Set<ReturnType<typeof browser.runtime.connect>>
   >();
+
+  // Vault unlock (SPEC §6) is global, not per-origin — unlike approvals,
+  // there's at most one pending unlock at a time; concurrent requests that
+  // all hit a locked vault share the same popup and all resolve together.
+  let pendingUnlock: {
+    resolvers: Array<(unlocked: boolean) => void>;
+    windowId?: number;
+  } | null = null;
+  const windowIdToUnlock = new Set<number>();
 
   // Awaited at the top of handleRequest — the service worker can restart and
   // receive a message before this resolves, which would otherwise reject an
@@ -158,12 +172,18 @@ export default defineBackground(() => {
 
   browser.windows.onRemoved.addListener((windowId) => {
     const origin = windowIdToOrigin.get(windowId);
-    if (!origin) return;
-    windowIdToOrigin.delete(windowId);
+    if (origin) {
+      windowIdToOrigin.delete(windowId);
+      // Window closed without an explicit Approve/Deny click (e.g. the user
+      // hit the X) counts as a denial — never leave a request hanging
+      // forever.
+      resolvePendingDenial(origin);
+    }
 
-    // Window closed without an explicit Approve/Deny click (e.g. the user hit
-    // the X) counts as a denial — never leave a request hanging forever.
-    resolvePendingDenial(origin);
+    if (windowIdToUnlock.has(windowId)) {
+      windowIdToUnlock.delete(windowId);
+      resolvePendingUnlock(false);
+    }
   });
 
   function resolvePendingDenial(origin: string) {
@@ -174,6 +194,68 @@ export default defineBackground(() => {
       ? AQUILIFER_ERRORS.NO_PROVIDER_OF_TYPE
       : pending.deniedReason;
     pending.resolve({ approved: false, reason, code: reason });
+  }
+
+  function resolvePendingUnlock(unlocked: boolean) {
+    if (!pendingUnlock) return;
+    const { resolvers, windowId } = pendingUnlock;
+    pendingUnlock = null;
+    if (windowId != null) windowIdToUnlock.delete(windowId);
+    for (const resolve of resolvers) resolve(unlocked);
+  }
+
+  /**
+   * Opens the unlock popup if nothing's already waiting on one, or joins
+   * the existing wait if there is — several concurrent requests hitting a
+   * locked vault at once share a single popup and all resolve together
+   * once it's answered.
+   */
+  async function promptUnlock(): Promise<boolean> {
+    if (pendingUnlock) {
+      return new Promise<boolean>((resolve) => {
+        pendingUnlock?.resolvers.push(resolve);
+      });
+    }
+
+    return new Promise<boolean>((resolve) => {
+      pendingUnlock = { resolvers: [resolve] };
+
+      browser.windows
+        .create({
+          url: browser.runtime.getURL('/unlock.html'),
+          type: 'popup',
+          width: 340,
+          height: 260,
+        })
+        .then((win) => {
+          if (win?.id == null) return;
+          windowIdToUnlock.add(win.id);
+          if (pendingUnlock) pendingUnlock.windowId = win.id;
+        });
+    });
+  }
+
+  /**
+   * Resolves a provider's `apiKey` to real, usable plaintext — prompting
+   * an unlock (§6) if it's vault-encrypted and the vault isn't currently
+   * unlocked. Returns a *new* provider object; the original stored
+   * provider (and anything else holding a reference to it) is never
+   * mutated, so a vault-locked provider's encrypted envelope stays intact
+   * in memory even if the unlock is denied.
+   */
+  async function decryptedProviderOrPrompt(
+    provider: ProviderConfig,
+  ): Promise<{ ok: true; provider: ProviderConfig } | { ok: false }> {
+    if (!provider.apiKey || !isEncryptedApiKey(provider.apiKey)) {
+      return { ok: true, provider };
+    }
+    if (!(await isVaultUnlocked()) && !(await promptUnlock())) {
+      return { ok: false };
+    }
+    return {
+      ok: true,
+      provider: { ...provider, apiKey: await resolveApiKey(provider.apiKey) },
+    };
   }
 
   function providerInfoFor(provider: ProviderConfig): AquiliferProviderInfo {
@@ -222,6 +304,14 @@ export default defineBackground(() => {
       originGrants.delete(message.origin);
       persistOriginGrants();
       broadcastEvent(message.origin, { name: 'disconnect' });
+    }
+
+    if (message.type === 'resolveUnlock') {
+      if (pendingUnlock?.windowId != null) {
+        windowIdToUnlock.delete(pendingUnlock.windowId);
+        browser.windows.remove(pendingUnlock.windowId).catch(() => {});
+      }
+      resolvePendingUnlock(message.unlocked);
     }
 
     return { ok: true };
@@ -504,9 +594,15 @@ export default defineBackground(() => {
       return;
     }
 
+    const decrypted = await decryptedProviderOrPrompt(provider);
+    if (!decrypted.ok) {
+      send(streamErrorEvent(AQUILIFER_ERRORS.VAULT_LOCKED));
+      return;
+    }
+
     let assembled = '';
     try {
-      await runChatStream(provider, params, (delta) => {
+      await runChatStream(decrypted.provider, params, (delta) => {
         assembled += delta;
         send({ type: 'chunk', delta });
       });
@@ -621,9 +717,15 @@ export default defineBackground(() => {
       return;
     }
 
+    const decrypted = await decryptedProviderOrPrompt(provider);
+    if (!decrypted.ok) {
+      send(streamErrorEvent(AQUILIFER_ERRORS.VAULT_LOCKED));
+      return;
+    }
+
     let chunkCount = 0;
     try {
-      await streamCall(provider, params, (chunk) => {
+      await streamCall(decrypted.provider, params, (chunk) => {
         chunkCount += 1;
         send({ type: 'chunk', chunk });
       });
@@ -752,8 +854,13 @@ export default defineBackground(() => {
           return errorResult(AQUILIFER_ERRORS.RATE_LIMITED);
         }
 
+        const decrypted = await decryptedProviderOrPrompt(provider);
+        if (!decrypted.ok) {
+          return errorResult(AQUILIFER_ERRORS.VAULT_LOCKED);
+        }
+
         try {
-          const result = await runChat(provider, payload.params);
+          const result = await runChat(decrypted.provider, payload.params);
           await appendHistoryEntry({
             id: crypto.randomUUID(),
             origin,
@@ -840,8 +947,16 @@ export default defineBackground(() => {
           return errorResult(AQUILIFER_ERRORS.RATE_LIMITED);
         }
 
+        const decrypted = await decryptedProviderOrPrompt(provider);
+        if (!decrypted.ok) {
+          return errorResult(AQUILIFER_ERRORS.VAULT_LOCKED);
+        }
+
         try {
-          const result = await callAnthropicMessages(provider, payload.params);
+          const result = await callAnthropicMessages(
+            decrypted.provider as AnthropicProvider,
+            payload.params,
+          );
           await anthropicMessagesHistory.appendHistoryEntry({
             id: crypto.randomUUID(),
             origin,
@@ -904,9 +1019,14 @@ export default defineBackground(() => {
           return errorResult(AQUILIFER_ERRORS.RATE_LIMITED);
         }
 
+        const decrypted = await decryptedProviderOrPrompt(provider);
+        if (!decrypted.ok) {
+          return errorResult(AQUILIFER_ERRORS.VAULT_LOCKED);
+        }
+
         try {
           const result = await callOpenAIChatCompletions(
-            provider,
+            decrypted.provider as OpenAICompatibleProvider,
             payload.params,
           );
           await openaiChatCompletionsHistory.appendHistoryEntry({

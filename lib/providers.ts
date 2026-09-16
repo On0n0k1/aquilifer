@@ -50,6 +50,13 @@ export async function saveProvider(provider: ProviderConfig): Promise<void> {
   if (!defaultId) await setDefaultProviderId(provider.id);
 }
 
+/** Overwrites the full providers array as-is, bypassing `saveProvider`'s
+ *  "first provider becomes default" logic — used by the vault (§6) when
+ *  bulk re-encrypting/decrypting every provider's `apiKey` in place. */
+export async function setProviders(providers: ProviderConfig[]): Promise<void> {
+  await browser.storage.local.set({ [PROVIDERS_KEY]: providers });
+}
+
 export async function deleteProvider(id: string): Promise<void> {
   const providers = await listProviders();
   await browser.storage.local.set({

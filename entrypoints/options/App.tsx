@@ -3,15 +3,22 @@ import ConnectedSitesSection from './ConnectedSitesSection';
 import HistorySection from './HistorySection';
 import ProvidersSection from './ProvidersSection';
 import RateLimitsSection from './RateLimitsSection';
+import SecuritySection from './SecuritySection';
 import './style.css';
 
-type PageTab = 'providers' | 'connectedSites' | 'rateLimits' | 'history';
+type PageTab =
+  | 'providers'
+  | 'connectedSites'
+  | 'rateLimits'
+  | 'history'
+  | 'security';
 
 const TAB_LABELS: Record<PageTab, string> = {
   providers: 'Providers',
   connectedSites: 'Connected sites',
   rateLimits: 'Rate limiting',
   history: 'History',
+  security: 'Security',
 };
 
 function App() {
@@ -40,6 +47,7 @@ function App() {
       {tab === 'connectedSites' && <ConnectedSitesSection />}
       {tab === 'rateLimits' && <RateLimitsSection />}
       {tab === 'history' && <HistorySection />}
+      {tab === 'security' && <SecuritySection />}
     </main>
   );
 }

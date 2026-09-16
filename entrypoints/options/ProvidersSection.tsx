@@ -10,6 +10,11 @@ import {
   saveProvider,
   setDefaultProviderId,
 } from '../../lib/providers';
+import {
+  encryptApiKeyForStorage,
+  isVaultConfigured,
+  isVaultUnlocked,
+} from '../../lib/vault';
 
 const VERIFICATION_MESSAGE = 'Reply with only the word OK.';
 
@@ -58,10 +63,14 @@ function ProvidersSection() {
   const [phase, setPhase] = useState<'idle' | 'testing' | 'saving'>('idle');
   const [useCustomModel, setUseCustomModel] = useState(false);
   const [modelFamily, setModelFamily] = useState('');
+  const [vaultLocked, setVaultLocked] = useState(false);
 
   useEffect(() => {
     listProviders().then(setProviders);
     getDefaultProviderId().then(setDefaultProviderIdState);
+    Promise.all([isVaultConfigured(), isVaultUnlocked()]).then(
+      ([configured, unlocked]) => setVaultLocked(configured && !unlocked),
+    );
   }, []);
 
   async function handleSetDefault(id: string) {
@@ -81,6 +90,14 @@ function ProvidersSection() {
 
     if (!form.label.trim()) {
       setError('Label is required.');
+      return;
+    }
+
+    // Checked up front, before the verification call below spends a real
+    // request against the provider — failing only at the final encrypt
+    // step would waste that call for nothing.
+    if (vaultLocked) {
+      setError('Vault is locked — unlock it from the Security tab first.');
       return;
     }
 
@@ -154,6 +171,9 @@ function ProvidersSection() {
       }
 
       setPhase('saving');
+      if (candidate.apiKey) {
+        candidate.apiKey = await encryptApiKeyForStorage(candidate.apiKey);
+      }
       await saveProvider(candidate);
 
       setForm(emptyForm());
@@ -212,6 +232,12 @@ function ProvidersSection() {
 
       <section>
         <h2>Add provider</h2>
+        {vaultLocked && (
+          <p className="error">
+            The vault is locked. Unlock it from the Security tab to add or
+            change providers.
+          </p>
+        )}
         <form onSubmit={handleSave}>
           <label>
             Type
@@ -350,7 +376,7 @@ function ProvidersSection() {
 
           {error && <p className="error">{error}</p>}
 
-          <button type="submit" disabled={phase !== 'idle'}>
+          <button type="submit" disabled={phase !== 'idle' || vaultLocked}>
             {phase === 'testing'
               ? 'Testing connection…'
               : phase === 'saving'

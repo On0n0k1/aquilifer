@@ -1,0 +1,64 @@
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  color: #1a1a1a;
+}
+
+main {
+  padding: 20px;
+}
+
+h1 {
+  font-size: 16px;
+  margin: 0 0 12px;
+}
+
+p {
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.warning {
+  color: #c0392b;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+input[type="password"] {
+  padding: 8px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+button {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  cursor: pointer;
+}
+
+button[type="submit"] {
+  background: #1a1a1a;
+  color: white;
+  border-color: #1a1a1a;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}

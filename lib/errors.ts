@@ -19,6 +19,7 @@ export const AQUILIFER_ERRORS = {
   STREAM_DISCONNECTED: 'stream_disconnected',
   PROVIDER_ERROR: 'provider_error',
   CHAT_FAILED: 'chat_failed',
+  VAULT_LOCKED: 'vault_locked',
 } as const;
 
 export type AquiliferErrorCode =

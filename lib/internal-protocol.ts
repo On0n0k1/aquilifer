@@ -25,7 +25,20 @@ export interface RevokeOriginMessage {
   origin: string;
 }
 
-export type InternalMessage = ResolveConnectMessage | RevokeOriginMessage;
+/** Sent by unlock.html after it calls `unlockVault()` itself (a privileged
+ *  page has the same storage access as background) — this just tells
+ *  background, which is the one tracking the pending request(s) waiting on
+ *  it, that it can resume (or give up, if the popup was closed/denied). */
+export interface ResolveUnlockMessage {
+  kind: typeof AQUILIFER_INTERNAL_KIND;
+  type: 'resolveUnlock';
+  unlocked: boolean;
+}
+
+export type InternalMessage =
+  | ResolveConnectMessage
+  | RevokeOriginMessage
+  | ResolveUnlockMessage;
 
 export function isInternalMessage(
   message: unknown,
