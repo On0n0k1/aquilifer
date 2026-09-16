@@ -1,6 +1,7 @@
 {
   "name": "aquilifer-ext",
   "description": "Browser extension LLM provider",
+  "license": "Apache-2.0",
   "private": true,
   "version": "0.0.0",
   "type": "module",
