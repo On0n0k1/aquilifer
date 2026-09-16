@@ -10,6 +10,8 @@ npm run dev          # starts the extension in dev mode (Chrome)
 npm run dev:firefox  # same, for Firefox
 ```
 
+The docs site (`docs/`) is a separate VitePress project with its own dependencies — `cd docs && npm install && npm run dev` to work on it locally. It doesn't affect, and isn't affected by, the extension's own lint/typecheck/test/build commands above.
+
 ## Before opening a pull request
 
 Run these locally — CI runs the same checks automatically, but catching problems before you push saves a round trip:

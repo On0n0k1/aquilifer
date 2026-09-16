@@ -1,0 +1,77 @@
+# Deploy Pages (SPEC §18) — entirely commented out on purpose.
+#
+# The docs site itself is implemented (docs/, VitePress) and builds cleanly
+# (`npm run build` inside docs/). This workflow is still inert because it
+# should only ever deploy when the project is ready to be shown publicly —
+# not automatically on every push, which is what an uncommented version of
+# this would otherwise do the moment it's added.
+#
+# To activate when that day comes:
+#   1. Uncomment everything below.
+#   2. Add a `PAGES_DEPLOY_TOKEN` secret to this repo — a fine-grained PAT
+#      scoped to only On0n0k1/On0n0k1.github.io with Contents: Read & write
+#      (see SPEC.md §18 for why it's its own token, not reused elsewhere).
+#      Already done once, as of this writing — check it's still valid
+#      before relying on it if a lot of time has passed.
+#   3. Decide the trigger deliberately — `workflow_dispatch` (manual only)
+#      keeps deploys a conscious action even after uncommenting everything
+#      else; adding the `push: branches: [main]` trigger back makes every
+#      merge to main go live immediately, which is the behavior to avoid
+#      until the project is meant to be public.
+#
+# name: Deploy Pages
+#
+# on:
+#   # push:
+#   #   branches: [main]
+#   workflow_dispatch:
+#
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     env:
+#       PROJECT_NAME: aquilifer         # URL segment: on0n0k1.github.io/<PROJECT_NAME>
+#       # Deliberately sites/$PROJECT_NAME, not the shared template's usual
+#       # sites/projects/$PROJECT_NAME default — Aquilifer's own decision.
+#       BUILD_OUTPUT_DIR: docs/.vitepress/dist   # VitePress's default output, relative to repo root
+#     steps:
+#       - uses: actions/checkout@v4
+#       - uses: actions/setup-node@v4
+#         with:
+#           node-version: 22
+#           cache: npm
+#           cache-dependency-path: docs/package-lock.json
+#       - run: npm ci
+#         working-directory: docs
+#       - run: npm run build
+#         working-directory: docs
+#
+#       - name: Clone On0n0k1.github.io
+#         run: |
+#           git clone --depth 1 https://x-access-token:${{ secrets.PAGES_DEPLOY_TOKEN }}@github.com/On0n0k1/On0n0k1.github.io.git "$RUNNER_TEMP/pages-repo"
+#
+#       - name: Sync built site into sites/$PROJECT_NAME
+#         run: |
+#           PAGES_REPO="$RUNNER_TEMP/pages-repo"
+#           rm -rf "$PAGES_REPO/sites/$PROJECT_NAME"
+#           mkdir -p "$PAGES_REPO/sites/$PROJECT_NAME"
+#           cp -r "$BUILD_OUTPUT_DIR"/. "$PAGES_REPO/sites/$PROJECT_NAME/"
+#
+#       - name: Commit and push
+#         run: |
+#           cd "$RUNNER_TEMP/pages-repo"
+#           git config user.name "github-actions[bot]"
+#           git config user.email "github-actions[bot]@users.noreply.github.com"
+#           git add -A
+#           if git diff --staged --quiet; then
+#             echo "No changes to deploy."
+#             exit 0
+#           fi
+#           git commit -m "deploy: sync $PROJECT_NAME from ${{ github.repository }}@${{ github.sha }}"
+#           for i in 1 2 3 4 5; do
+#             git push && exit 0
+#             echo "Push rejected, retrying with rebase ($i)..."
+#             git pull --rebase
+#           done
+#           echo "Push failed after retries" >&2
+#           exit 1
