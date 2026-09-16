@@ -7,8 +7,8 @@
 
 import type Anthropic from '@anthropic-ai/sdk';
 import { AQUILIFER_ERRORS } from '../errors';
-import type { AnthropicProvider } from '../providers';
 import { describeError, readSseDataLines } from '../llm-clients/shared';
+import type { AnthropicProvider } from '../providers';
 
 const ANTHROPIC_API_VERSION = '2023-06-01';
 const ANTHROPIC_MESSAGES_URL = 'https://api.anthropic.com/v1/messages';

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AQUILIFER_INTERNAL_KIND } from '../../lib/internal-protocol';
 import { loadOriginGrants, type OriginGrants } from '../../lib/permissions';
 import { listProviders, type ProviderConfig } from '../../lib/providers';
@@ -7,14 +7,14 @@ function ConnectedSitesSection() {
   const [grants, setGrants] = useState<OriginGrants>({});
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
 
-  async function refresh() {
+  const refresh = useCallback(async () => {
     setGrants(await loadOriginGrants());
     setProviders(await listProviders());
-  }
+  }, []);
 
   useEffect(() => {
     refresh();
-  }, []);
+  }, [refresh]);
 
   async function handleDisconnect(origin: string) {
     await browser.runtime.sendMessage({
@@ -42,7 +42,7 @@ function ConnectedSitesSection() {
                   {provider ? provider.label : 'provider no longer exists'}
                 </div>
               </div>
-              <button onClick={() => handleDisconnect(origin)}>
+              <button type="button" onClick={() => handleDisconnect(origin)}>
                 Disconnect
               </button>
             </li>

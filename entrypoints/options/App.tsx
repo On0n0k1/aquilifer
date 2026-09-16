@@ -24,6 +24,7 @@ function App() {
       <div className="page-tab-bar" role="tablist">
         {(Object.keys(TAB_LABELS) as PageTab[]).map((key) => (
           <button
+            type="button"
             key={key}
             role="tab"
             aria-selected={tab === key}

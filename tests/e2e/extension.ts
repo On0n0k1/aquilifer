@@ -3,9 +3,10 @@
 // ephemeral `browser.newContext()`) plus the extension id read off its
 // service worker's own URL, since an unpacked extension's id isn't known
 // ahead of time.
-import { test as base, chromium, type BrowserContext } from '@playwright/test';
+
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { type BrowserContext, test as base, chromium } from '@playwright/test';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const EXTENSION_PATH = path.join(dirname, '../../.output/chrome-mv3');
@@ -14,6 +15,11 @@ export const test = base.extend<{
   context: BrowserContext;
   extensionId: string;
 }>({
+  // Playwright requires the first parameter to be an object-destructuring
+  // pattern, even an empty one — it statically parses fixture functions to
+  // see which fixtures they use, and a plain named parameter isn't
+  // recognized the same way.
+  // biome-ignore lint/correctness/noEmptyPattern: see above
   context: async ({}, use) => {
     // Empty string userDataDir -> Playwright creates and cleans up a fresh
     // temporary profile per run, so chrome.storage.local (providers, origin

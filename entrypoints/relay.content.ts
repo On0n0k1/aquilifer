@@ -1,10 +1,11 @@
 import {
+  type AnthropicMessagesStreamStartMessage,
   AQUILIFER_ANTHROPIC_MESSAGES_STREAM_CONTENT_SOURCE,
   AQUILIFER_ANTHROPIC_MESSAGES_STREAM_PAGE_SOURCE,
   AQUILIFER_ANTHROPIC_MESSAGES_STREAM_PORT_NAME,
   AQUILIFER_CONTENT_SOURCE,
-  AQUILIFER_EVENTS_PORT_NAME,
   AQUILIFER_EVENT_CONTENT_SOURCE,
+  AQUILIFER_EVENTS_PORT_NAME,
   AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_CONTENT_SOURCE,
   AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_PAGE_SOURCE,
   AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_PORT_NAME,
@@ -12,7 +13,6 @@ import {
   AQUILIFER_STREAM_CONTENT_SOURCE,
   AQUILIFER_STREAM_PAGE_SOURCE,
   AQUILIFER_STREAM_PORT_NAME,
-  type AnthropicMessagesStreamStartMessage,
   type AquiliferPageMessage,
   type AquiliferProviderStreamEvent,
   type AquiliferResponsePayload,
@@ -134,7 +134,10 @@ export default defineContentScript({
       params: unknown,
     ) {
       const post = (event: AquiliferProviderStreamEvent<unknown>) =>
-        window.postMessage({ source: contentSource, id, event }, location.origin);
+        window.postMessage(
+          { source: contentSource, id, event },
+          location.origin,
+        );
 
       let port: ReturnType<typeof browser.runtime.connect>;
       try {

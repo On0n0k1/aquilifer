@@ -1,14 +1,14 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import { runChat } from '../../lib/llm-clients';
 import {
   deleteProvider,
   getDefaultProviderId,
   listProviders,
   originPatternForUrl,
-  saveProvider,
-  setDefaultProviderId,
   type ProviderConfig,
   type ProviderType,
+  saveProvider,
+  setDefaultProviderId,
 } from '../../lib/providers';
 
 const VERIFICATION_MESSAGE = 'Reply with only the word OK.';
@@ -190,11 +190,17 @@ function ProvidersSection() {
                 </div>
                 <div className="provider-actions">
                   {!isDefault && (
-                    <button onClick={() => handleSetDefault(provider.id)}>
+                    <button
+                      type="button"
+                      onClick={() => handleSetDefault(provider.id)}
+                    >
                       Set default
                     </button>
                   )}
-                  <button onClick={() => handleDelete(provider.id)}>
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(provider.id)}
+                  >
                     Remove
                   </button>
                 </div>
@@ -274,11 +280,13 @@ function ProvidersSection() {
                       setForm({ ...form, model: event.target.value })
                     }
                   >
-                    {(ANTHROPIC_MODEL_FAMILIES[modelFamily] ?? []).map((version) => (
-                      <option key={version.id} value={version.id}>
-                        {version.label}
-                      </option>
-                    ))}
+                    {(ANTHROPIC_MODEL_FAMILIES[modelFamily] ?? []).map(
+                      (version) => (
+                        <option key={version.id} value={version.id}>
+                          {version.label}
+                        </option>
+                      ),
+                    )}
                   </select>
                 </label>
               )}

@@ -3,8 +3,9 @@
 // one. Extensions only inject into real http(s) origins, not file:// pages
 // (Chrome requires an explicit user opt-in for file:// access), so a real
 // local server is necessary, not just opening the HTML file directly.
-import http from 'node:http';
+
 import fs from 'node:fs';
+import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -13,7 +14,7 @@ const root = path.join(dirname, 'pages');
 const port = process.env.PORT ? Number(process.env.PORT) : 4415;
 
 const server = http.createServer((req, res) => {
-  const requestPath = req.url === '/' ? '/test-page.html' : req.url ?? '';
+  const requestPath = req.url === '/' ? '/test-page.html' : (req.url ?? '');
   const filePath = path.join(root, requestPath);
 
   // Never serve outside `pages/` — req.url is attacker-controlled input if

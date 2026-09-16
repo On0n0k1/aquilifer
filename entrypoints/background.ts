@@ -14,28 +14,27 @@ import {
   AQUILIFER_OPENAI_CHAT_COMPLETIONS_STREAM_PORT_NAME,
   AQUILIFER_STREAM_PORT_NAME,
 } from '../lib/aquilifer-protocol';
-import type {
-  AquiliferChatParams,
-  AquiliferPageEvent,
-  AquiliferProviderInfo,
-} from '../lib/public-api';
+import {
+  AQUILIFER_ERRORS,
+  type AquiliferErrorCode,
+  dynamicErrorResult,
+  dynamicStreamErrorEvent,
+  errorResult,
+  streamErrorEvent,
+} from '../lib/errors';
+import * as anthropicMessagesHistory from '../lib/history/anthropic-messages';
 import {
   appendHistoryEntry,
   countRecentEntries,
   listHistoryForOrigin,
 } from '../lib/history/generic';
-import * as anthropicMessagesHistory from '../lib/history/anthropic-messages';
 import * as openaiChatCompletionsHistory from '../lib/history/openai-chat-completions';
 import {
-  AQUILIFER_ERRORS,
-  dynamicErrorResult,
-  dynamicStreamErrorEvent,
-  errorResult,
-  streamErrorEvent,
-  type AquiliferErrorCode,
-} from '../lib/errors';
-import { isInternalMessage, type InternalMessage } from '../lib/internal-protocol';
+  type InternalMessage,
+  isInternalMessage,
+} from '../lib/internal-protocol';
 import { runChat, runChatStream } from '../lib/llm-clients';
+import { loadOriginGrants, saveOriginGrants } from '../lib/permissions';
 import {
   callAnthropicMessages,
   callOpenAIChatCompletions,
@@ -43,13 +42,17 @@ import {
   streamOpenAIChatCompletions,
 } from '../lib/provider-interfaces';
 import {
-  listProviders,
   type AnthropicProvider,
+  listProviders,
   type OpenAICompatibleProvider,
   type ProviderConfig,
   type ProviderType,
 } from '../lib/providers';
-import { loadOriginGrants, saveOriginGrants } from '../lib/permissions';
+import type {
+  AquiliferChatParams,
+  AquiliferPageEvent,
+  AquiliferProviderInfo,
+} from '../lib/public-api';
 import {
   getRateLimitSettings,
   type RateLimitInterface,
@@ -135,7 +138,8 @@ export default defineBackground(() => {
     if (port.name === AQUILIFER_EVENTS_PORT_NAME) {
       const sender = port.sender;
       const origin =
-        sender?.origin ?? (sender?.url ? new URL(sender.url).origin : undefined);
+        sender?.origin ??
+        (sender?.url ? new URL(sender.url).origin : undefined);
       if (!origin) return;
 
       let ports = eventPorts.get(origin);
@@ -173,7 +177,10 @@ export default defineBackground(() => {
   }
 
   function providerInfoFor(provider: ProviderConfig): AquiliferProviderInfo {
-    return { type: provider.type, model: provider.resolvedModel ?? provider.model };
+    return {
+      type: provider.type,
+      model: provider.resolvedModel ?? provider.model,
+    };
   }
 
   /** Pushes a page event (SPEC §5) to every open tab of `origin` — the tab
@@ -227,7 +234,10 @@ export default defineBackground(() => {
    */
   async function openApprovalPopup(
     origin: string,
-    options: { requiredType?: ProviderType; currentProviderLabel?: string } = {},
+    options: {
+      requiredType?: ProviderType;
+      currentProviderLabel?: string;
+    } = {},
   ): Promise<ApprovalOutcome> {
     const providers = await listProviders();
     const matching = options.requiredType
@@ -237,14 +247,16 @@ export default defineBackground(() => {
     return new Promise<ApprovalOutcome>((resolve) => {
       pendingApprovals.set(origin, {
         resolve,
-        noProviderOfType: Boolean(options.requiredType) && matching.length === 0,
+        noProviderOfType:
+          Boolean(options.requiredType) && matching.length === 0,
         deniedReason: options.requiredType
           ? AQUILIFER_ERRORS.SWITCH_DENIED
           : AQUILIFER_ERRORS.CONNECT_DENIED,
       });
 
       const params = new URLSearchParams({ origin });
-      if (options.requiredType) params.set('requiredType', options.requiredType);
+      if (options.requiredType)
+        params.set('requiredType', options.requiredType);
       if (options.currentProviderLabel) {
         params.set('currentProviderLabel', options.currentProviderLabel);
       }
@@ -352,9 +364,9 @@ export default defineBackground(() => {
     windowMs: number,
   ): Promise<number> {
     const counts = await Promise.all(
-      (
-        ['generic', 'anthropicMessages', 'openaiChatCompletions'] as const
-      ).map((interfaceName) => bucketCounter(interfaceName)(origin, windowMs)),
+      (['generic', 'anthropicMessages', 'openaiChatCompletions'] as const).map(
+        (interfaceName) => bucketCounter(interfaceName)(origin, windowMs),
+      ),
     );
     return counts.reduce((sum, count) => sum + count, 0);
   }
@@ -755,7 +767,9 @@ export default defineBackground(() => {
           return { ok: true, result: { message: result.text } };
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : AQUILIFER_ERRORS.CHAT_FAILED;
+            error instanceof Error
+              ? error.message
+              : AQUILIFER_ERRORS.CHAT_FAILED;
           await appendHistoryEntry({
             id: crypto.randomUUID(),
             origin,
@@ -844,7 +858,9 @@ export default defineBackground(() => {
           return { ok: true, result };
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : AQUILIFER_ERRORS.CHAT_FAILED;
+            error instanceof Error
+              ? error.message
+              : AQUILIFER_ERRORS.CHAT_FAILED;
           await anthropicMessagesHistory.appendHistoryEntry({
             id: crypto.randomUUID(),
             origin,
@@ -909,7 +925,9 @@ export default defineBackground(() => {
           return { ok: true, result };
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : AQUILIFER_ERRORS.CHAT_FAILED;
+            error instanceof Error
+              ? error.message
+              : AQUILIFER_ERRORS.CHAT_FAILED;
           await openaiChatCompletionsHistory.appendHistoryEntry({
             id: crypto.randomUUID(),
             origin,

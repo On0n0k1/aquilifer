@@ -1,4 +1,5 @@
 import {
+  type AnthropicMessagesStreamEventMessage,
   AQUILIFER_ANTHROPIC_MESSAGES_STREAM_CONTENT_SOURCE,
   AQUILIFER_ANTHROPIC_MESSAGES_STREAM_PAGE_SOURCE,
   AQUILIFER_CONTENT_SOURCE,
@@ -8,7 +9,6 @@ import {
   AQUILIFER_PAGE_SOURCE,
   AQUILIFER_STREAM_CONTENT_SOURCE,
   AQUILIFER_STREAM_PAGE_SOURCE,
-  type AnthropicMessagesStreamEventMessage,
   type AquiliferContentMessage,
   type AquiliferEventContentMessage,
   type AquiliferRequestPayload,
@@ -17,13 +17,6 @@ import {
 } from '../lib/aquilifer-protocol';
 import { createAsyncStreamQueue } from '../lib/async-stream-queue';
 import type {
-  AquiliferChatParams,
-  AquiliferError,
-  AquiliferGenericRequestPayload,
-  AquiliferPageEvent,
-  AquiliferStreamChunk,
-} from '../lib/public-api';
-import type {
   AnthropicMessagesRequest,
   AnthropicMessagesResponse,
   AnthropicMessagesStreamEvent,
@@ -31,6 +24,13 @@ import type {
   OpenAIChatCompletionsResponse,
   OpenAIChatCompletionsStreamChunk,
 } from '../lib/provider-interfaces';
+import type {
+  AquiliferChatParams,
+  AquiliferError,
+  AquiliferGenericRequestPayload,
+  AquiliferPageEvent,
+  AquiliferStreamChunk,
+} from '../lib/public-api';
 
 export default defineContentScript({
   matches: ['<all_urls>'],
@@ -82,7 +82,9 @@ export default defineContentScript({
      *  but its queue holds a different chunk type, §10). */
     function routeProviderStreamMessage<T>(
       queues: Map<string, ReturnType<typeof createAsyncStreamQueue<T>>>,
-      data: AnthropicMessagesStreamEventMessage | OpenAIChatCompletionsStreamEventMessage,
+      data:
+        | AnthropicMessagesStreamEventMessage
+        | OpenAIChatCompletionsStreamEventMessage,
     ) {
       const queue = queues.get(data.id);
       if (!queue) return;

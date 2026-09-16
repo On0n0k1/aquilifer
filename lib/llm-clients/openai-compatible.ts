@@ -5,9 +5,9 @@
 // saving it — never from the content script or injected script, which never
 // see the credential.
 
-import type { AquiliferChatParams } from '../public-api';
 import type { OpenAICompatibleProvider } from '../providers';
-import { describeError, readSseDataLines, type ChatResult } from './shared';
+import type { AquiliferChatParams } from '../public-api';
+import { type ChatResult, describeError, readSseDataLines } from './shared';
 
 function requestHeaders(provider: OpenAICompatibleProvider) {
   return {

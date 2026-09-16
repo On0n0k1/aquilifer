@@ -1,5 +1,8 @@
 import { useState } from 'react';
-import { getRateLimitSettings, setRateLimitSettings } from '../../lib/rate-limits';
+import {
+  getRateLimitSettings,
+  setRateLimitSettings,
+} from '../../lib/rate-limits';
 
 function getOriginFromQuery(): string {
   return new URLSearchParams(window.location.search).get('origin') ?? '';
@@ -33,7 +36,7 @@ function App() {
         Disable this popup
       </label>
       <div className="actions">
-        <button onClick={close} autoFocus>
+        <button type="button" onClick={close}>
           OK
         </button>
       </div>

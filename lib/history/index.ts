@@ -3,6 +3,6 @@
 // only cares about one bucket (e.g. background.ts's chat handler) should
 // import that module directly instead (e.g. `lib/history/generic`).
 
-export * as generic from './generic';
 export * as anthropicMessages from './anthropic-messages';
+export * as generic from './generic';
 export * as openaiChatCompletions from './openai-chat-completions';

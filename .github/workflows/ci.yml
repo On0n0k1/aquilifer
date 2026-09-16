@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Lint, typecheck, unit + component tests (vitest), and the build — cheap
+  # enough (SPEC §11) to run on every push, not just PRs.
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run compile
+      - run: npm test
+      - run: npm run build
+
+  # Needs a real Chromium download + a headed launch (SPEC §11's load-bearing
+  # finding: extensions don't load under Playwright's default headless
+  # shell), so it's slower than the tier above — PR-only rather than every
+  # push.
+  e2e:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      # GitHub-hosted runners have no display, and extension e2e tests must
+      # launch headed (SPEC §11's load-bearing finding — extensions don't
+      # load at all under Playwright's default headless shell) — xvfb-run
+      # gives Chromium a virtual one.
+      - run: sudo apt-get update && sudo apt-get install -y xvfb
+      - run: xvfb-run --auto-servernum npm run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7

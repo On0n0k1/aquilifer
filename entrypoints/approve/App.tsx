@@ -18,13 +18,15 @@ function getQueryParams() {
   const params = new URLSearchParams(window.location.search);
   return {
     origin: params.get('origin') ?? '',
-    requiredType: (params.get('requiredType') as ProviderType | null) ?? undefined,
+    requiredType:
+      (params.get('requiredType') as ProviderType | null) ?? undefined,
     currentProviderLabel: params.get('currentProviderLabel') ?? undefined,
   };
 }
 
 function App() {
-  const [{ origin, requiredType, currentProviderLabel }] = useState(getQueryParams);
+  const [{ origin, requiredType, currentProviderLabel }] =
+    useState(getQueryParams);
   const [providers, setProviders] = useState<ProviderConfig[] | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState('');
   const [responded, setResponded] = useState(false);
@@ -130,13 +132,13 @@ function App() {
       )}
 
       <div className="actions">
-        <button onClick={deny} disabled={responded}>
+        <button type="button" onClick={deny} disabled={responded}>
           Deny
         </button>
         <button
+          type="button"
           onClick={approve}
           disabled={responded || !hasProviders}
-          autoFocus
         >
           Approve
         </button>

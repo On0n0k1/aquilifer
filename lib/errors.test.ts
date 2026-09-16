@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   AQUILIFER_ERRORS,
-  PROVIDER_ERROR_PREFIX,
   codeForErrorMessage,
   dynamicErrorResult,
   dynamicStreamErrorEvent,
   errorResult,
+  PROVIDER_ERROR_PREFIX,
   streamErrorEvent,
 } from './errors';
 

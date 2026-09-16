@@ -3,9 +3,9 @@
 // options page to verify a provider before saving it — never from the
 // content script or injected script, which never see the credential.
 
-import type { AquiliferChatParams } from '../public-api';
 import type { AnthropicProvider } from '../providers';
-import { describeError, readSseDataLines, type ChatResult } from './shared';
+import type { AquiliferChatParams } from '../public-api';
+import { type ChatResult, describeError, readSseDataLines } from './shared';
 
 const ANTHROPIC_API_VERSION = '2023-06-01';
 const DEFAULT_MAX_TOKENS = 1024;

@@ -5,8 +5,8 @@
 
 import type OpenAI from 'openai';
 import { AQUILIFER_ERRORS } from '../errors';
-import type { OpenAICompatibleProvider } from '../providers';
 import { describeError, readSseDataLines } from '../llm-clients/shared';
+import type { OpenAICompatibleProvider } from '../providers';
 
 export type OpenAIChatCompletionsRequest = Omit<
   OpenAI.ChatCompletionCreateParamsNonStreaming,

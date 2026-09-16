@@ -27,7 +27,9 @@ export interface RevokeOriginMessage {
 
 export type InternalMessage = ResolveConnectMessage | RevokeOriginMessage;
 
-export function isInternalMessage(message: unknown): message is InternalMessage {
+export function isInternalMessage(
+  message: unknown,
+): message is InternalMessage {
   return (
     typeof message === 'object' &&
     message !== null &&

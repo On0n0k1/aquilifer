@@ -226,7 +226,7 @@ button {
   background: white;
 }
 
-form button[type='submit'] {
+form button[type="submit"] {
   background: #1a1a1a;
   color: white;
   border-color: #1a1a1a;

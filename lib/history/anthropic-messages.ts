@@ -4,15 +4,13 @@
 // shape (tool use, images, blocks), so entries here store a compact summary
 // instead.
 
-import { createHistoryStore, type BaseHistoryEntry } from './shared';
+import { type BaseHistoryEntry, createHistoryStore } from './shared';
 
 export interface AnthropicMessagesHistoryEntry extends BaseHistoryEntry {
   providerId: string;
   providerLabel: string;
   requestSummary: string;
-  outcome:
-    | { ok: true; responseSummary: string }
-    | { ok: false; error: string };
+  outcome: { ok: true; responseSummary: string } | { ok: false; error: string };
   warnings?: string[];
 }
 

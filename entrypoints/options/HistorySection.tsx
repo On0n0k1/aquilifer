@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react';
 import * as anthropicMessagesHistory from '../../lib/history/anthropic-messages';
 import {
   clearHistory as clearGenericHistory,
-  listHistory as listGenericHistory,
   type HistoryEntry,
+  listHistory as listGenericHistory,
 } from '../../lib/history/generic';
 import * as openaiChatCompletionsHistory from '../../lib/history/openai-chat-completions';
 
@@ -49,7 +49,9 @@ function GenericHistoryList() {
     <>
       <div className="history-bucket-header">
         {history.length > 0 && (
-          <button onClick={handleClear}>Clear all</button>
+          <button type="button" onClick={handleClear}>
+            Clear all
+          </button>
         )}
       </div>
       {history.length === 0 && <p>No requests yet.</p>}
@@ -97,9 +99,7 @@ interface NativeHistoryEntry {
   timestamp: number;
   providerLabel: string;
   requestSummary: string;
-  outcome:
-    | { ok: true; responseSummary: string }
-    | { ok: false; error: string };
+  outcome: { ok: true; responseSummary: string } | { ok: false; error: string };
   warnings?: string[];
 }
 
@@ -124,7 +124,9 @@ function NativeHistoryList({ module }: { module: NativeHistoryModule }) {
     <>
       <div className="history-bucket-header">
         {history.length > 0 && (
-          <button onClick={handleClear}>Clear all</button>
+          <button type="button" onClick={handleClear}>
+            Clear all
+          </button>
         )}
       </div>
       {history.length === 0 && <p>No requests yet.</p>}
@@ -166,6 +168,7 @@ function HistorySection() {
       <div className="tab-bar" role="tablist">
         {(Object.keys(BUCKET_LABELS) as HistoryBucket[]).map((key) => (
           <button
+            type="button"
             key={key}
             role="tab"
             aria-selected={bucket === key}

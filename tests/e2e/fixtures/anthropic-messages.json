@@ -1,0 +1,10 @@
+{
+  "id": "msg_fixture01",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-fixture-resolved",
+  "content": [{ "type": "text", "text": "Hello from the fixture." }],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": { "input_tokens": 10, "output_tokens": 8 }
+}

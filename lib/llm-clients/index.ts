@@ -1,7 +1,10 @@
-import type { AquiliferChatParams } from '../public-api';
 import type { ProviderConfig } from '../providers';
+import type { AquiliferChatParams } from '../public-api';
 import { callAnthropic, streamAnthropic } from './anthropic';
-import { callOpenAICompatible, streamOpenAICompatible } from './openai-compatible';
+import {
+  callOpenAICompatible,
+  streamOpenAICompatible,
+} from './openai-compatible';
 
 export type { ChatResult } from './shared';
 

@@ -3,7 +3,8 @@
 // approval popup -> background -> back to the page. Everything a unit test
 // can't see, since it all happens across real separate browser surfaces.
 import type { AnthropicProvider } from '../../lib/providers';
-import { expect, test } from './fixtures';
+import { expect, test } from './extension';
+import { FIXTURES, fulfillJson } from './fixtures';
 
 const TEST_PROVIDER: AnthropicProvider = {
   id: 'e2e-test-provider',
@@ -21,7 +22,8 @@ test('connect, approve, and chat() resolves with the mocked provider response', 
   // UI — this scenario is about proving the connect/approve/chat plumbing,
   // not the provider-creation form (a separate concern for its own test).
   let [serviceWorker] = context.serviceWorkers();
-  if (!serviceWorker) serviceWorker = await context.waitForEvent('serviceworker');
+  if (!serviceWorker)
+    serviceWorker = await context.waitForEvent('serviceworker');
   await serviceWorker.evaluate(
     (provider) => browser.storage.local.set({ providers: [provider] }),
     TEST_PROVIDER,
@@ -30,14 +32,7 @@ test('connect, approve, and chat() resolves with the mocked provider response', 
   // Mock Anthropic's Messages API so the test never makes a real network
   // call or needs a real credential.
   await context.route('https://api.anthropic.com/v1/messages', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        content: [{ type: 'text', text: 'Hello from the mock.' }],
-        model: 'claude-e2e-test-resolved',
-      }),
-    }),
+    fulfillJson(route, FIXTURES.ANTHROPIC_MESSAGES),
   );
 
   await page.goto('/');
@@ -68,5 +63,5 @@ test('connect, approve, and chat() resolves with the mocked provider response', 
     }),
   );
 
-  expect(chatResult).toEqual({ message: 'Hello from the mock.' });
+  expect(chatResult).toEqual({ message: 'Hello from the fixture.' });
 });

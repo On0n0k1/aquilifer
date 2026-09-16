@@ -4,7 +4,7 @@
 // its own origin, the site) to review what's been asked.
 
 import type { AquiliferChatParams } from '../public-api';
-import { createHistoryStore, type BaseHistoryEntry } from './shared';
+import { type BaseHistoryEntry, createHistoryStore } from './shared';
 
 export interface HistoryEntry extends BaseHistoryEntry {
   providerId: string;

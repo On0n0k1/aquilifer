@@ -1,11 +1,11 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { type FormEvent, useEffect, useState } from 'react';
 import {
   DEFAULT_RATE_LIMIT_SETTINGS,
-  getRateLimitSettings,
-  setRateLimitSettings,
   type FrequencyLimit,
+  getRateLimitSettings,
   type RateLimitInterface,
   type RateLimitSettings,
+  setRateLimitSettings,
 } from '../../lib/rate-limits';
 
 const INTERFACE_LABELS: Record<RateLimitInterface, string> = {

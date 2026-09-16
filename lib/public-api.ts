@@ -30,7 +30,14 @@ export interface AquiliferProviderInfo {
  *  agnostic surface. Someone who just wants "ask the LLM something" never
  *  needs to see anything beyond this. */
 export type AquiliferGenericRequestPayload =
-  | { method: 'connect' | 'disconnect' | 'getHistory' | 'getProvider' | 'isConnected' }
+  | {
+      method:
+        | 'connect'
+        | 'disconnect'
+        | 'getHistory'
+        | 'getProvider'
+        | 'isConnected';
+    }
   | { method: 'chat'; params: AquiliferChatParams };
 
 /** What a website actually receives from each `for await` iteration of
@@ -70,7 +77,9 @@ declare global {
      */
     aquilifer?: EventTarget & {
       request: (payload: AquiliferGenericRequestPayload) => Promise<unknown>;
-      stream: (params: AquiliferChatParams) => AsyncIterable<AquiliferStreamChunk>;
+      stream: (
+        params: AquiliferChatParams,
+      ) => AsyncIterable<AquiliferStreamChunk>;
       anthropicMessages: (
         body: AnthropicMessagesRequest,
       ) => Promise<AnthropicMessagesResponse>;
