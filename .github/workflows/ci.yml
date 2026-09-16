@@ -64,6 +64,13 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      # @semantic-release/github's post-release "success" step comments on
+      # any GitHub issues/PRs referenced by the released commits — with
+      # only contents:write it fails 403 (Resource not accessible by
+      # integration) after the actual release (tag, GitHub Release,
+      # version bump) has already completed successfully.
+      issues: write
+      pull-requests: write
     steps:
       - uses: actions/checkout@v4
         with:
