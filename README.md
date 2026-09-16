@@ -32,8 +32,8 @@ if (window.aquilifer) {
 ## Installing from source
 
 ```sh
-git clone https://github.com/On0n0k1/aquilifer-ext.git
-cd aquilifer-ext
+git clone https://github.com/On0n0k1/aquilifer.git
+cd aquilifer
 npm install
 npm run build
 ```
