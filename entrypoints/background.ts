@@ -57,6 +57,7 @@ import {
   getRateLimitSettings,
   type RateLimitInterface,
 } from '../lib/rate-limits';
+import { runMigrations } from '../lib/schema-migrations';
 import {
   isEncryptedApiKey,
   isVaultUnlocked,
@@ -100,14 +101,23 @@ export default defineBackground(() => {
   } | null = null;
   const windowIdToUnlock = new Set<number>();
 
+  // Awaited before anything else touches storage — migrations have to
+  // finish first, since a future migration could change the very shape
+  // `loadOriginGrants()` below reads; running them concurrently risks
+  // loading pre-migration data into memory. Safe to run on every startup,
+  // not just an actual install/update (see lib/schema-migrations.ts).
+  const schemaMigrationsComplete = runMigrations();
+
   // Awaited at the top of handleRequest — the service worker can restart and
   // receive a message before this resolves, which would otherwise reject an
   // already-approved origin as not_connected.
-  const originGrantsLoaded = loadOriginGrants().then((grants) => {
-    for (const [origin, providerId] of Object.entries(grants)) {
-      originGrants.set(origin, providerId);
-    }
-  });
+  const originGrantsLoaded = schemaMigrationsComplete
+    .then(() => loadOriginGrants())
+    .then((grants) => {
+      for (const [origin, providerId] of Object.entries(grants)) {
+        originGrants.set(origin, providerId);
+      }
+    });
 
   function persistOriginGrants() {
     saveOriginGrants(Object.fromEntries(originGrants));
