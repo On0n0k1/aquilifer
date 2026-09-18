@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/On0n0k1/aquilifer/compare/v1.1.0...v1.1.1) (2026-09-18)
+
+
+### Bug Fixes
+
+* stop deploy-pages workflow failing on every push ([35821d8](https://github.com/On0n0k1/aquilifer/commit/35821d86935ba214e5ca3716817ee0a6c8ed34c4))
+
 # [1.1.0](https://github.com/On0n0k1/aquilifer/compare/v1.0.0...v1.1.0) (2026-09-18)
 
 
