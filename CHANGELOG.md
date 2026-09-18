@@ -1,3 +1,12 @@
+# [1.1.0](https://github.com/On0n0k1/aquilifer/compare/v1.0.0...v1.1.0) (2026-09-18)
+
+
+### Features
+
+* add an opt-in encrypted vault for provider API keys ([873e848](https://github.com/On0n0k1/aquilifer/commit/873e8484da1c957a62c7fffe04eb5b3b1a8fa588))
+* add storage schema migrations ([cad92d8](https://github.com/On0n0k1/aquilifer/commit/cad92d8494a2b786de19b978e91d44f4c62daa7f))
+* replace placeholder icon and popup logo with Aquilifer artwork ([76d1a60](https://github.com/On0n0k1/aquilifer/commit/76d1a608ab787cfea265bc44fc6769b246f99787))
+
 # 1.0.0 (2026-09-16)
 
 
