@@ -1,34 +1,45 @@
-# Deploy Pages (SPEC §18) — entirely commented out on purpose.
+# Deploy Pages (SPEC §18) — syntactically valid but deliberately inert.
+#
+# A workflow file that's *entirely* comments (no `on`/`jobs`) parses to
+# YAML `null` — GitHub still registers it as a workflow purely because it
+# exists under .github/workflows/, and fails every push with "invalid
+# workflow file" (this is exactly what happened before this version). This
+# version fixes that by being valid YAML with a real, harmless job — but
+# still can't deploy anything: `workflow_dispatch` never fires on its own
+# (manual-trigger-only), and the job itself is just a placeholder echo, not
+# the real deploy steps.
 #
 # The docs site itself is implemented (docs/, VitePress) and builds cleanly
-# (`npm run build` inside docs/). This workflow is still inert because it
-# should only ever deploy when the project is ready to be shown publicly —
-# not automatically on every push, which is what an uncommented version of
-# this would otherwise do the moment it's added.
+# (`npm run build` inside docs/). Deploy stays disabled here on purpose —
+# it should only go live when the project is ready to be shown publicly,
+# not the moment this workflow becomes valid.
 #
 # To activate when that day comes:
-#   1. Uncomment everything below.
+#   1. Replace the placeholder `deploy` job below with the real steps kept
+#      in the comment block at the bottom of this file.
 #   2. Add a `PAGES_DEPLOY_TOKEN` secret to this repo — a fine-grained PAT
 #      scoped to only On0n0k1/On0n0k1.github.io with Contents: Read & write
 #      (see SPEC.md §18 for why it's its own token, not reused elsewhere).
 #      Already done once, as of this writing — check it's still valid
 #      before relying on it if a lot of time has passed.
-#   3. Decide the trigger deliberately — `workflow_dispatch` (manual only)
-#      keeps deploys a conscious action even after uncommenting everything
-#      else; adding the `push: branches: [main]` trigger back makes every
-#      merge to main go live immediately, which is the behavior to avoid
-#      until the project is meant to be public.
+#   3. Decide the trigger deliberately — keeping `workflow_dispatch` (manual
+#      only) keeps deploys a conscious action; adding a `push: branches:
+#      [main]` trigger makes every merge to main go live immediately, which
+#      is the behavior to avoid until the project is meant to be public.
+
+name: Deploy Pages
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Deploy pipeline not enabled yet — see this file's comments to activate it."
+
+# Real deploy steps, ready to swap in for the placeholder step above:
 #
-# name: Deploy Pages
-#
-# on:
-#   # push:
-#   #   branches: [main]
-#   workflow_dispatch:
-#
-# jobs:
-#   deploy:
-#     runs-on: ubuntu-latest
 #     env:
 #       PROJECT_NAME: aquilifer         # URL segment: on0n0k1.github.io/<PROJECT_NAME>
 #       # Deliberately sites/$PROJECT_NAME, not the shared template's usual
