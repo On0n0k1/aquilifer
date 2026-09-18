@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import reactLogo from '@/assets/react.svg';
-import wxtLogo from '/wxt.svg';
+import aquiliferLogo from '/aquila.png';
 import './App.css';
 
 function App() {
@@ -9,9 +9,7 @@ function App() {
   return (
     <>
       <div>
-        <a href="https://wxt.dev" target="_blank" rel="noopener">
-          <img src={wxtLogo} className="logo" alt="WXT logo" />
-        </a>
+        <img src={aquiliferLogo} className="logo" alt="Aquilifer logo" />
         <a href="https://react.dev" target="_blank" rel="noopener">
           <img src={reactLogo} className="logo react" alt="React logo" />
         </a>
