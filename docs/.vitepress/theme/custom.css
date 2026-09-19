@@ -1,0 +1,82 @@
+/* Aquilifer color palette (SPEC §15) — the same tokens the extension
+ * itself uses (Popup/Options/Approve), applied here via VitePress's
+ * documented CSS-variable override mechanism so the docs site reads as
+ * the same product rather than a generic VitePress site. Deep moss green
+ * is the fixed brand base, not a light/dark-mode-following neutral (same
+ * reasoning as the extension's own CSS) — config.ts sets
+ * `appearance: 'force-dark'` to drop the light/dark toggle entirely, and
+ * these variables are set on both `:root` and `.dark` so the palette is
+ * identical regardless of which scope VitePress's own styles read from. */
+
+:root,
+.dark {
+  --color-bg: #14261c;
+  --color-bg-alt: #0f1e16;
+  --color-bg-raised: #1c3226;
+  --color-gold: #c9a227;
+  --color-gold-hover: #ddb62d;
+  --color-gold-active: #a3810f;
+  --color-red: #8b1e1e;
+  --color-parchment: #f2ede4;
+
+  /* Brand (links, active nav, accents) */
+  --vp-c-brand-1: var(--color-gold);
+  --vp-c-brand-2: var(--color-gold-hover);
+  --vp-c-brand-3: var(--color-gold-active);
+  --vp-c-brand-soft: rgba(201, 162, 39, 0.14);
+
+  /* Page/surface backgrounds */
+  --vp-c-bg: var(--color-bg);
+  --vp-c-bg-alt: var(--color-bg-alt);
+  --vp-c-bg-soft: var(--color-bg-raised);
+  --vp-c-bg-elv: var(--color-bg-raised);
+  --vp-c-gutter: var(--color-bg-alt);
+
+  /* Text */
+  --vp-c-text-1: var(--color-parchment);
+  --vp-c-text-2: rgba(242, 237, 228, 0.75);
+  --vp-c-text-3: rgba(242, 237, 228, 0.5);
+
+  /* Borders/dividers — gold at low opacity, matching the extension's own
+   * hairline borders. */
+  --vp-c-divider: rgba(201, 162, 39, 0.2);
+  --vp-c-border: rgba(201, 162, 39, 0.3);
+
+  /* Oxblood red — sparing accent only (danger banners, deleted-code diff
+   * lines), same restraint the extension's own palette calls for. */
+  --vp-c-danger-1: var(--color-red);
+  --vp-c-danger-2: var(--color-red);
+  --vp-c-danger-3: var(--color-red);
+  --vp-c-danger-soft: rgba(139, 30, 30, 0.16);
+
+  /* Primary buttons (hero "Get started", etc.) — solid gold fill with
+   * dark text, the same inverted treatment as the extension's own
+   * primary CTAs (Approve, form submit buttons). */
+  --vp-button-brand-bg: var(--color-gold);
+  --vp-button-brand-text: var(--color-bg);
+  --vp-button-brand-hover-bg: var(--color-gold-hover);
+  --vp-button-brand-hover-text: var(--color-bg);
+  --vp-button-brand-border: var(--color-gold);
+
+  /* Secondary buttons (hero "View on GitHub", etc.) — gold-outline, the
+   * same secondary treatment as the extension's own Deny/Cancel buttons,
+   * instead of VitePress's default light pill that clashes on a dark
+   * background. */
+  --vp-button-alt-bg: rgba(201, 162, 39, 0.08);
+  --vp-button-alt-text: var(--color-gold);
+  --vp-button-alt-border: var(--color-gold);
+  --vp-button-alt-hover-bg: rgba(201, 162, 39, 0.18);
+  --vp-button-alt-hover-text: var(--color-gold);
+  --vp-button-alt-hover-border: var(--color-gold);
+
+  /* Code blocks */
+  --vp-code-block-bg: var(--color-bg-raised);
+  --vp-code-bg: rgba(201, 162, 39, 0.12);
+
+  /* Hero title on the landing page */
+  --vp-home-hero-name-color: var(--color-gold);
+}
+
+body {
+  background-color: var(--color-bg);
+}

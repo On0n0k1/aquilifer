@@ -11,6 +11,12 @@ export default defineConfig({
   // client-side route generation).
   base: '/aquilifer/',
   cleanUrls: true,
+  // Aquilifer's brand palette (theme/custom.css) is a fixed dark-green
+  // identity, not a light/dark-mode-following neutral — same reasoning as
+  // the extension's own CSS. force-dark drops the toggle entirely rather
+  // than leaving a switcher that would just flip between two identical-
+  // looking states.
+  appearance: 'force-dark',
 
   themeConfig: {
     nav: [
