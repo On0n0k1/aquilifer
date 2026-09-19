@@ -1,7 +1,20 @@
+/* Aquilifer color palette (SPEC §15) — same tokens as the popup
+ * (entrypoints/popup/style.css), rolled out here as the second surface.
+ * Deep moss green is the fixed brand base, not a light/dark-mode-following
+ * neutral, so there's no prefers-color-scheme branching on purpose. */
+:root {
+  --color-bg: #14261c;
+  --color-bg-raised: #1c3226;
+  --color-gold: #c9a227;
+  --color-red: #8b1e1e;
+  --color-parchment: #f2ede4;
+}
+
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
-  color: #1a1a1a;
+  color: var(--color-parchment);
+  background-color: var(--color-bg);
 }
 
 main {
@@ -13,11 +26,13 @@ main {
 h1 {
   font-size: 20px;
   margin: 0 0 24px;
+  color: var(--color-gold);
 }
 
 h2 {
   font-size: 15px;
   margin: 0 0 12px;
+  color: var(--color-gold);
 }
 
 section {
@@ -36,21 +51,23 @@ section {
   align-items: center;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.15);
 }
 
 .provider-type {
   margin-left: 8px;
   font-size: 11px;
-  color: #666;
+  color: var(--color-parchment);
+  opacity: 0.6;
   text-transform: uppercase;
 }
 
 .provider-default {
   margin-left: 8px;
   font-size: 11px;
-  color: white;
-  background: #1a1a1a;
+  font-weight: 600;
+  color: var(--color-bg);
+  background: var(--color-gold);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -62,7 +79,8 @@ section {
 
 .provider-detail {
   font-size: 12px;
-  color: #666;
+  color: var(--color-parchment);
+  opacity: 0.6;
   word-break: break-all;
 }
 
@@ -81,7 +99,7 @@ section {
   display: flex;
   gap: 4px;
   margin-bottom: 24px;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.25);
 }
 
 .page-tab {
@@ -90,22 +108,24 @@ section {
   background: none;
   cursor: pointer;
   font-size: 13px;
-  color: #666;
+  color: var(--color-parchment);
+  opacity: 0.6;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
 
 .page-tab.active {
-  color: #1a1a1a;
+  color: var(--color-gold);
+  opacity: 1;
   font-weight: 600;
-  border-bottom-color: #1a1a1a;
+  border-bottom-color: var(--color-gold);
 }
 
 .tab-bar {
   display: flex;
   gap: 4px;
   margin-bottom: 12px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.15);
 }
 
 .tab {
@@ -114,15 +134,17 @@ section {
   background: none;
   cursor: pointer;
   font-size: 12px;
-  color: #666;
+  color: var(--color-parchment);
+  opacity: 0.6;
   border-bottom: 2px solid transparent;
   margin-bottom: -1px;
 }
 
 .tab.active {
-  color: #1a1a1a;
+  color: var(--color-gold);
+  opacity: 1;
   font-weight: 600;
-  border-bottom-color: #1a1a1a;
+  border-bottom-color: var(--color-gold);
 }
 
 .history-bucket-header {
@@ -142,10 +164,16 @@ section {
   overflow-y: auto;
 }
 
+/* History entries get a raised parchment card rather than staying flush
+ * with the dark base (SPEC §15's "parchment white... card backgrounds") —
+ * this is the one part of the page with enough dense, read-at-length text
+ * (prompts/results) to warrant a lighter reading surface. */
 .history-list li {
   padding: 10px;
-  border: 1px solid #eee;
+  border: 1px solid rgba(201, 162, 39, 0.3);
   border-radius: 6px;
+  background: var(--color-parchment);
+  color: var(--color-bg);
 }
 
 .history-meta {
@@ -153,12 +181,14 @@ section {
   gap: 8px;
   align-items: baseline;
   font-size: 11px;
-  color: #666;
+  color: var(--color-bg);
+  opacity: 0.65;
   margin-bottom: 6px;
 }
 
 .history-meta strong {
-  color: #1a1a1a;
+  color: var(--color-bg);
+  opacity: 1;
   font-size: 12px;
 }
 
@@ -170,13 +200,14 @@ section {
 
 .history-result {
   font-size: 12px;
-  color: #1a1a1a;
+  color: var(--color-bg);
   word-break: break-word;
 }
 
 .history-error {
   font-size: 12px;
-  color: #c0392b;
+  color: var(--color-red);
+  font-weight: 600;
   word-break: break-word;
 }
 
@@ -197,7 +228,7 @@ fieldset {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  border: 1px solid #eee;
+  border: 1px solid rgba(201, 162, 39, 0.25);
   border-radius: 6px;
   padding: 12px;
   margin: 0;
@@ -206,6 +237,7 @@ fieldset {
 legend {
   font-size: 12px;
   font-weight: 600;
+  color: var(--color-gold);
   padding: 0 4px;
 }
 
@@ -214,31 +246,43 @@ select {
   padding: 8px;
   font-size: 13px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: var(--color-bg-raised);
+  color: var(--color-parchment);
 }
 
 button {
   padding: 8px 12px;
   font-size: 13px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-gold);
   cursor: pointer;
-  background: white;
+  color: var(--color-gold);
+  background-color: rgba(201, 162, 39, 0.08);
+}
+
+button:hover {
+  background-color: rgba(201, 162, 39, 0.18);
 }
 
 form button[type="submit"] {
-  background: #1a1a1a;
-  color: white;
-  border-color: #1a1a1a;
+  background: var(--color-gold);
+  color: var(--color-bg);
+  border-color: var(--color-gold);
+  font-weight: 600;
+}
+
+form button[type="submit"]:hover {
+  background: #ddb62d;
 }
 
 button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: default;
 }
 
 .error {
-  color: #c0392b;
+  color: var(--color-red);
   font-size: 13px;
   margin: 0;
 }
@@ -249,10 +293,14 @@ button:disabled {
   margin-bottom: 4px;
 }
 
+/* Warnings are informational, not alerts — kept on the gold accent rather
+ * than the sparing red one, which SPEC §15 reserves for genuine alerts
+ * (a warning tag can appear on every history entry; red shouldn't). */
 .warning-tag {
   font-size: 11px;
-  color: #92400e;
-  background: #fef3c7;
+  font-weight: 600;
+  color: var(--color-bg);
+  background: var(--color-gold);
   padding: 2px 6px;
   border-radius: 4px;
 }
@@ -266,4 +314,8 @@ button:disabled {
 .checkbox-option input {
   width: auto;
   padding: 0;
+}
+
+.provider-list li strong {
+  color: var(--color-gold);
 }
