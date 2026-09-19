@@ -4,17 +4,19 @@ A provider is a connection between Aquilifer and one LLM backend, using your own
 
 ## Two kinds of provider
 
-**Anthropic** — Claude, using your own Anthropic API key. Pick a model family and version from a dropdown (or enter a custom model ID).
+**Anthropic** — Claude, using your own Anthropic API key.
 
-**OpenAI-compatible** — anything that speaks OpenAI's chat-completions format: OpenAI itself, or a self-hosted/local backend such as [llama.cpp](https://github.com/ggml-org/llama.cpp), [Ollama](https://ollama.com/), or [LM Studio](https://lmstudio.ai/). You provide a base URL (e.g. `http://localhost:8080`) and a model name; the API key is optional, since many local backends don't require one.
+**OpenAI-compatible** — anything that speaks OpenAI's chat-completions format: OpenAI itself, or a self-hosted/local backend such as [llama.cpp](https://github.com/ggml-org/llama.cpp), [Ollama](https://ollama.com/), or [LM Studio](https://lmstudio.ai/). You provide a base URL (e.g. `http://localhost:8080`); the API key is optional, since many local backends don't require one.
 
 ## Adding a provider
 
-1. Fill in a label (just for your own reference — sites never see it), the credential, and the model.
-2. Click **Save**. Aquilifer makes a real, minimal request to the provider to verify the credential and URL actually work before storing anything — if that fails, nothing is saved.
-3. The model your provider's own response reports is what gets shown to a connected site (via `getProvider`), not necessarily the exact string you typed.
+You don't pick a model when adding a provider — just connect it, and choose the model afterward.
 
-For a self-hosted/local backend, saving it the first time will also ask your browser for permission to make requests to that URL — this is a one-time browser permission prompt, separate from Aquilifer's own connect-a-site approval.
+1. Fill in a label (just for your own reference — sites never see it) and the credential (API key for Anthropic; base URL, and optionally an API key, for OpenAI-compatible).
+2. Click **Connect**. Aquilifer asks the provider itself which models are available — this both discovers what you can use and proves the credential/URL actually work, with no separate test request needed. The first model returned is picked automatically; you can change it any time afterward from the toolbar popup (click the Aquilifer icon → find the provider → **Change model**).
+3. If the provider doesn't support listing its own models (some self-hosted backends don't), Aquilifer asks you to type a model ID manually instead, then verifies it with one real request before saving.
+
+For a self-hosted/local backend, connecting it the first time will also ask your browser for permission to make requests to that URL — this is a one-time browser permission prompt, separate from Aquilifer's own connect-a-site approval.
 
 ## Default provider and switching
 
