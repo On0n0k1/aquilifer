@@ -5,9 +5,11 @@ import { AQUILIFER_INTERNAL_KIND } from '../../lib/internal-protocol';
 import { listModels, type ModelInfo } from '../../lib/llm-clients';
 import { loadOriginGrants } from '../../lib/permissions';
 import {
+  getDefaultProviderId,
   listProviders,
   type ProviderConfig,
   saveProvider,
+  setDefaultProviderId,
 } from '../../lib/providers';
 import {
   computeOriginRateLimitStatus,
@@ -70,6 +72,9 @@ interface ModelPickerState {
 
 function App() {
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
+  const [defaultProviderId, setDefaultProviderIdState] = useState<
+    string | undefined
+  >();
   const [siteProviderId, setSiteProviderId] = useState<string | undefined>();
   const [siteStatus, setSiteStatus] = useState<OriginRateLimitStatus | null>(
     null,
@@ -81,6 +86,7 @@ function App() {
 
   useEffect(() => {
     listProviders().then(setProviders);
+    getDefaultProviderId().then(setDefaultProviderIdState);
 
     // activeTab (wxt.config.ts) grants access to this tab's URL only
     // because opening the popup is itself the qualifying user gesture —
@@ -156,11 +162,20 @@ function App() {
   async function handleSelectModel(provider: ProviderConfig, model: string) {
     await saveProvider({ ...provider, model, resolvedModel: undefined });
     setProviders(await listProviders());
+    closeModelPicker(provider.id);
+  }
+
+  function closeModelPicker(providerId: string) {
     setPickers((prev) => {
       const next = { ...prev };
-      delete next[provider.id];
+      delete next[providerId];
       return next;
     });
+  }
+
+  async function handleSetDefault(id: string) {
+    await setDefaultProviderId(id);
+    setDefaultProviderIdState(id);
   }
 
   const siteProvider = providers.find((p) => p.id === siteProviderId);
@@ -216,26 +231,37 @@ function App() {
               return (
                 <li key={provider.id}>
                   <div className="provider-row-main">
-                    <div>
-                      <strong>{provider.label}</strong>
-                      <span className="provider-type">{provider.type}</span>
-                      {provider.id === siteProviderId && (
-                        <span className="provider-current-site">this site</span>
-                      )}
-                      <div className="provider-detail">{provider.model}</div>
-                    </div>
-                    <div className="provider-row-actions">
-                      {activeProviderIds.has(provider.id) && (
-                        <span
-                          className="in-use-spinner"
-                          role="img"
-                          aria-label="In use right now"
-                          title="In use right now"
-                        >
-                          ⚙
-                        </span>
-                      )}
-                      {picker?.status === 'ready' ? (
+                    <strong>{provider.label}</strong>
+                    <span className="provider-type">{provider.type}</span>
+                    {provider.id === siteProviderId && (
+                      <span className="provider-current-site">this site</span>
+                    )}
+                    {provider.id === defaultProviderId && (
+                      <span className="provider-default">default</span>
+                    )}
+                    {activeProviderIds.has(provider.id) && (
+                      <span
+                        className="in-use-spinner"
+                        role="img"
+                        aria-label="In use right now"
+                        title="In use right now"
+                      >
+                        ⚙
+                      </span>
+                    )}
+                  </div>
+                  <div className="provider-detail">{provider.model}</div>
+                  <div className="provider-row-actions">
+                    {provider.id !== defaultProviderId && (
+                      <button
+                        type="button"
+                        onClick={() => handleSetDefault(provider.id)}
+                      >
+                        Set default
+                      </button>
+                    )}
+                    {picker?.status === 'ready' ? (
+                      <>
                         <select
                           value={provider.model}
                           onChange={(event) =>
@@ -248,18 +274,27 @@ function App() {
                             </option>
                           ))}
                         </select>
-                      ) : (
                         <button
                           type="button"
-                          onClick={() => openModelPicker(provider)}
-                          disabled={picker?.status === 'loading'}
+                          className="model-picker-cancel"
+                          aria-label="Cancel changing model"
+                          title="Cancel"
+                          onClick={() => closeModelPicker(provider.id)}
                         >
-                          {picker?.status === 'loading'
-                            ? 'Loading…'
-                            : 'Change model'}
+                          ✕
                         </button>
-                      )}
-                    </div>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => openModelPicker(provider)}
+                        disabled={picker?.status === 'loading'}
+                      >
+                        {picker?.status === 'loading'
+                          ? 'Loading…'
+                          : 'Change model'}
+                      </button>
+                    )}
                   </div>
                   {picker?.status === 'error' && (
                     <p className="model-picker-error">{picker.error}</p>

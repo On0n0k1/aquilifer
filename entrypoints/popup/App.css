@@ -91,14 +91,15 @@
 
 .provider-row-main {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .provider-row-actions {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 8px;
 }
 
@@ -128,21 +129,24 @@
 }
 
 .provider-type {
-  margin-left: 8px;
   font-size: 11px;
   color: var(--color-parchment);
   opacity: 0.6;
   text-transform: uppercase;
 }
 
-.provider-current-site {
-  margin-left: 8px;
+.provider-current-site,
+.provider-default {
   font-size: 11px;
   font-weight: 600;
   color: var(--color-bg);
   background: var(--color-gold);
   padding: 2px 6px;
   border-radius: 4px;
+}
+
+.model-picker-cancel {
+  line-height: 1;
 }
 
 /* An active-state indicator (SPEC §15) — the other legitimate use of the

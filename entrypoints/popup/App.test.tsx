@@ -3,7 +3,7 @@
 // and in-use polling in this component all depend on rendered DOM and
 // storage/message state a plain unit test can't see, but don't need a real
 // browser extension loaded to verify, unlike the e2e tier.
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AnthropicProvider } from '../../lib/providers';
@@ -105,5 +105,62 @@ describe('providers configured', () => {
     expect(
       await screen.findByRole('img', { name: 'In use right now' }),
     ).toBeInTheDocument();
+  });
+
+  it('sets a non-default provider as default', async () => {
+    const OTHER_PROVIDER: AnthropicProvider = {
+      id: 'anthropic-2',
+      type: 'anthropic',
+      label: 'Other Anthropic',
+      apiKey: 'sk-test-2',
+      model: 'claude-test-2',
+    };
+    await browser.storage.local.set({
+      providers: [PROVIDER, OTHER_PROVIDER],
+      defaultProviderId: PROVIDER.id,
+    });
+
+    render(<App />);
+    const otherRow = (await screen.findByText('Other Anthropic')).closest('li');
+    if (!otherRow) throw new Error('row not found');
+
+    await userEvent.click(
+      within(otherRow).getByRole('button', { name: 'Set default' }),
+    );
+
+    expect(await within(otherRow).findByText('default')).toBeInTheDocument();
+    const myRow = screen.getByText('My Anthropic').closest('li');
+    if (!myRow) throw new Error('row not found');
+    expect(
+      within(myRow).getByRole('button', { name: 'Set default' }),
+    ).toBeInTheDocument();
+  });
+
+  it('changing the model can be cancelled without saving, even with only one model available', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: [{ id: 'claude-test', display_name: 'Claude Test' }],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<App />);
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Change model' }),
+    );
+
+    expect(await screen.findByRole('combobox')).toBeInTheDocument();
+    await userEvent.click(
+      screen.getByRole('button', { name: 'Cancel changing model' }),
+    );
+
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Change model' }),
+    ).toBeInTheDocument();
+
+    vi.unstubAllGlobals();
   });
 });
