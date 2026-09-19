@@ -1,3 +1,24 @@
+# [1.2.0](https://github.com/On0n0k1/aquilifer/compare/v1.1.1...v1.2.0) (2026-09-19)
+
+
+### Bug Fixes
+
+* **popup:** add Set default, and let the model picker be cancelled ([403f7e1](https://github.com/On0n0k1/aquilifer/commit/403f7e1391311af55842c5bdb8aa0b2b9bf48a87))
+* re-render icons with working alpha transparency ([a2e94e1](https://github.com/On0n0k1/aquilifer/commit/a2e94e1847fe25dca39021dc972832aeb32b2368))
+
+
+### Features
+
+* **approve:** apply the Aquilifer color palette ([852adde](https://github.com/On0n0k1/aquilifer/commit/852adde0ea6eb4fddb3a48d06a5e7395e57df255))
+* **background:** track in-flight requests and share rate-limit status logic ([6336491](https://github.com/On0n0k1/aquilifer/commit/6336491331267c88d552325f5e9fcf10e97d7155))
+* **options:** apply the Aquilifer color palette ([5886c35](https://github.com/On0n0k1/aquilifer/commit/5886c355b501375cfbe52c142af4d12aebf06fed))
+* **options:** auto-discover the model when adding a provider ([2ef0ae2](https://github.com/On0n0k1/aquilifer/commit/2ef0ae2307cb77f9f705d9d6df5c6d0452c1a516))
+* **popup:** add a per-provider model switcher ([746639b](https://github.com/On0n0k1/aquilifer/commit/746639bddcc3bda3e629333e24e3b288964bcdcc))
+* **popup:** apply the Aquilifer color palette ([73aebf0](https://github.com/On0n0k1/aquilifer/commit/73aebf0fcc0f4e70141d0808dfeba3fb38dd0eb7))
+* **popup:** replace the WXT scaffold with real Aquilifer content ([cc7e267](https://github.com/On0n0k1/aquilifer/commit/cc7e267ed9f7463283c6127de69a4ddc6c758914))
+* **popup:** right-align action buttons, add site disconnect ([439f1b7](https://github.com/On0n0k1/aquilifer/commit/439f1b730e1ca6325ce4542ae963d3841f66ed70))
+* **providers:** add model-listing clients for Anthropic and OpenAI-compatible ([6de7c13](https://github.com/On0n0k1/aquilifer/commit/6de7c13a133f5be55d8e5e01340860bfb1fd570c))
+
 ## [1.1.1](https://github.com/On0n0k1/aquilifer/compare/v1.1.0...v1.1.1) (2026-09-18)
 
 
