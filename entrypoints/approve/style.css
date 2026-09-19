@@ -1,7 +1,22 @@
+/* Aquilifer color palette (SPEC §15) — same tokens as the popup/Options.
+ * This is the most trust-critical surface (the user has to read and
+ * understand it correctly before granting LLM access), so restraint
+ * matters here specifically: gold marks what needs attention (the
+ * requesting origin, the primary action), red stays reserved for the
+ * one real warning state. */
+:root {
+  --color-bg: #14261c;
+  --color-bg-raised: #1c3226;
+  --color-gold: #c9a227;
+  --color-red: #8b1e1e;
+  --color-parchment: #f2ede4;
+}
+
 body {
   margin: 0;
   font-family: system-ui, sans-serif;
-  color: #1a1a1a;
+  color: var(--color-parchment);
+  background-color: var(--color-bg);
 }
 
 main {
@@ -11,6 +26,7 @@ main {
 h1 {
   font-size: 16px;
   margin: 0 0 12px;
+  color: var(--color-gold);
 }
 
 p {
@@ -19,8 +35,19 @@ p {
   word-break: break-all;
 }
 
+/* The requesting origin is the one thing a user must actually read
+ * before approving — gold draws the eye to it, same role gold plays
+ * everywhere else (headers, key interactive elements). */
+p strong {
+  color: var(--color-gold);
+}
+
 .warning {
-  color: #c0392b;
+  color: var(--color-red);
+}
+
+.warning a {
+  color: var(--color-gold);
 }
 
 label {
@@ -35,7 +62,9 @@ select {
   padding: 8px;
   font-size: 13px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: var(--color-bg-raised);
+  color: var(--color-parchment);
 }
 
 .actions {
@@ -49,17 +78,27 @@ button {
   padding: 8px 12px;
   font-size: 13px;
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-gold);
+  color: var(--color-gold);
+  background-color: rgba(201, 162, 39, 0.08);
   cursor: pointer;
 }
 
+button:hover {
+  background-color: rgba(201, 162, 39, 0.18);
+}
+
 button:last-child {
-  background: #1a1a1a;
-  color: white;
-  border-color: #1a1a1a;
+  background: var(--color-gold);
+  color: var(--color-bg);
+  font-weight: 600;
+}
+
+button:last-child:hover {
+  background: #ddb62d;
 }
 
 button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: default;
 }
