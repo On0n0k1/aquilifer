@@ -37,6 +37,48 @@ describe('Generic chat history', () => {
     // Not rendered as literal markdown syntax.
     expect(screen.queryByText(/## Heading/)).not.toBeInTheDocument();
   });
+
+  it('labels the prompt and response so their boundary is visible', async () => {
+    await browser.storage.local.set({
+      history: [
+        {
+          id: 'h1',
+          origin: 'https://example.com',
+          timestamp: Date.now(),
+          providerId: 'p1',
+          providerLabel: 'My Anthropic',
+          messages: [{ role: 'user', content: 'hi' }],
+          outcome: { ok: true, message: 'hello back' },
+        },
+      ],
+    });
+
+    render(<HistorySection />);
+
+    expect(await screen.findByText('user:')).toBeInTheDocument();
+    expect(screen.getByText('assistant:')).toBeInTheDocument();
+  });
+
+  it('labels a failed request as an error', async () => {
+    await browser.storage.local.set({
+      history: [
+        {
+          id: 'h1',
+          origin: 'https://example.com',
+          timestamp: Date.now(),
+          providerId: 'p1',
+          providerLabel: 'My Anthropic',
+          messages: [{ role: 'user', content: 'hi' }],
+          outcome: { ok: false, error: 'provider_error' },
+        },
+      ],
+    });
+
+    render(<HistorySection />);
+
+    expect(await screen.findByText('error:')).toBeInTheDocument();
+    expect(screen.getByText(/provider_error/)).toBeInTheDocument();
+  });
 });
 
 describe('Anthropic Messages history', () => {

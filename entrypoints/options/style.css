@@ -174,8 +174,11 @@ section {
 /* History entries get a raised parchment card rather than staying flush
  * with the dark base (SPEC §15's "parchment white... card backgrounds") —
  * this is the one part of the page with enough dense, read-at-length text
- * (prompts/results) to warrant a lighter reading surface. */
-.history-list li {
+ * (prompts/results) to warrant a lighter reading surface. Child combinator,
+ * not descendant — a markdown-rendered response can contain its own <li>
+ * elements (bullet/numbered lists), which are also descendants of
+ * .history-list and would otherwise pick up this same card styling. */
+.history-list > li {
   padding: 10px;
   border: 1px solid rgba(201, 162, 39, 0.3);
   border-radius: 6px;
@@ -210,17 +213,25 @@ section {
   margin-right: 4px;
 }
 
-.history-result {
+/* A divider ahead of the response — without it, a markdown-rendered
+ * prompt and response just ran into each other with no visible boundary
+ * between where the user's message ends and the reply begins. */
+.history-result,
+.history-error {
   font-size: 12px;
-  color: var(--color-bg);
   word-break: break-word;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(20, 38, 28, 0.2);
+}
+
+.history-result {
+  color: var(--color-bg);
 }
 
 .history-error {
-  font-size: 12px;
   color: var(--color-red);
   font-weight: 600;
-  word-break: break-word;
 }
 
 /* Rendered markdown (SPEC §7) — real LLM output, so it needs its own

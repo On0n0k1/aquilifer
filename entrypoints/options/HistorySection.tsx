@@ -96,10 +96,13 @@ function GenericHistoryList() {
                     entry.outcome.ok ? 'history-result' : 'history-error'
                   }
                 >
+                  <span className="history-prompt-role">
+                    {entry.outcome.ok ? 'assistant:' : 'error:'}
+                  </span>
                   {entry.outcome.ok ? (
                     <MarkdownMessage content={entry.outcome.message} />
                   ) : (
-                    entry.outcome.error
+                    ` ${entry.outcome.error}`
                   )}
                 </div>
               </li>
