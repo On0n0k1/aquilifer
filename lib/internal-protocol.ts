@@ -35,10 +35,21 @@ export interface ResolveUnlockMessage {
   unlocked: boolean;
 }
 
+/** Polled by the toolbar popup (SPEC — visual design) for its "in use"
+ *  indicator. Which providers currently have a request in flight only
+ *  exists as in-memory state in background — everything else the popup
+ *  needs (providers, grants, rate-limit history) it reads straight out of
+ *  storage itself, the same privileged-page pattern Options already uses. */
+export interface GetActiveRequestsMessage {
+  kind: typeof AQUILIFER_INTERNAL_KIND;
+  type: 'getActiveRequests';
+}
+
 export type InternalMessage =
   | ResolveConnectMessage
   | RevokeOriginMessage
-  | ResolveUnlockMessage;
+  | ResolveUnlockMessage
+  | GetActiveRequestsMessage;
 
 export function isInternalMessage(
   message: unknown,

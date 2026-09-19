@@ -25,7 +25,6 @@ import {
 import * as anthropicMessagesHistory from '../lib/history/anthropic-messages';
 import {
   appendHistoryEntry,
-  countRecentEntries,
   listHistoryForOrigin,
 } from '../lib/history/generic';
 import * as openaiChatCompletionsHistory from '../lib/history/openai-chat-completions';
@@ -54,6 +53,7 @@ import type {
   AquiliferProviderInfo,
 } from '../lib/public-api';
 import {
+  computeOriginRateLimitStatus,
   getRateLimitSettings,
   type RateLimitInterface,
 } from '../lib/rate-limits';
@@ -91,6 +91,27 @@ export default defineBackground(() => {
     string,
     Set<ReturnType<typeof browser.runtime.connect>>
   >();
+
+  // providerId -> count of in-flight provider calls, for the popup's "in
+  // use" indicator (SPEC — visual design). In-memory only, never persisted:
+  // if the service worker restarts mid-request the underlying fetch is
+  // gone anyway, so there's nothing meaningful to recover.
+  const activeRequestCounts = new Map<string, number>();
+
+  function trackActiveRequest<T>(
+    providerId: string,
+    work: () => Promise<T>,
+  ): Promise<T> {
+    activeRequestCounts.set(
+      providerId,
+      (activeRequestCounts.get(providerId) ?? 0) + 1,
+    );
+    return work().finally(() => {
+      const next = (activeRequestCounts.get(providerId) ?? 1) - 1;
+      if (next <= 0) activeRequestCounts.delete(providerId);
+      else activeRequestCounts.set(providerId, next);
+    });
+  }
 
   // Vault unlock (SPEC §6) is global, not per-origin — unlike approvals,
   // there's at most one pending unlock at a time; concurrent requests that
@@ -292,7 +313,11 @@ export default defineBackground(() => {
 
   async function handleInternalMessage(
     message: InternalMessage,
-  ): Promise<{ ok: true }> {
+  ): Promise<{ ok: true } | { activeProviderIds: string[] }> {
+    if (message.type === 'getActiveRequests') {
+      return { activeProviderIds: Array.from(activeRequestCounts.keys()) };
+    }
+
     if (message.type === 'resolveConnect') {
       const pending = pendingApprovals.get(message.origin);
       if (pending) {
@@ -448,35 +473,11 @@ export default defineBackground(() => {
     return { ok: true, provider };
   }
 
-  function bucketCounter(interfaceName: RateLimitInterface) {
-    switch (interfaceName) {
-      case 'generic':
-        return countRecentEntries;
-      case 'anthropicMessages':
-        return anthropicMessagesHistory.countRecentEntries;
-      case 'openaiChatCompletions':
-        return openaiChatCompletionsHistory.countRecentEntries;
-    }
-  }
-
-  async function countAcrossAllInterfaces(
-    origin: string,
-    windowMs: number,
-  ): Promise<number> {
-    const counts = await Promise.all(
-      (['generic', 'anthropicMessages', 'openaiChatCompletions'] as const).map(
-        (interfaceName) => bucketCounter(interfaceName)(origin, windowMs),
-      ),
-    );
-    return counts.reduce((sum, count) => sum + count, 0);
-  }
-
   /**
-   * Size crossing its threshold is a non-blocking warning; frequency is
-   * two-tiered (SPEC §4): a global limit summed across every interface's
-   * history bucket, and a tighter per-interface limit on top. Blocked if
-   * either is exceeded. All counts read existing history entries, so this
-   * costs no extra state.
+   * Size crossing its threshold is a non-blocking warning; frequency
+   * blocking itself comes from `computeOriginRateLimitStatus` (lib/
+   * rate-limits.ts) — the one place that counting logic lives, shared with
+   * the popup's own status display so the two can never drift apart.
    */
   async function computeRateLimitOutcome(
     origin: string,
@@ -490,20 +491,9 @@ export default defineBackground(() => {
       warnings.push('large_request');
     }
 
-    const perInterface = settings.perInterface[interfaceName];
-    const perInterfaceCount = await bucketCounter(interfaceName)(
-      origin,
-      perInterface.windowMinutes * 60_000,
-    );
-    const perInterfaceBlocked = perInterfaceCount >= perInterface.threshold;
-
-    const globalCount = await countAcrossAllInterfaces(
-      origin,
-      settings.global.windowMinutes * 60_000,
-    );
-    const globalBlocked = globalCount >= settings.global.threshold;
-
-    const blocked = perInterfaceBlocked || globalBlocked;
+    const status = await computeOriginRateLimitStatus(origin);
+    const blocked =
+      status.global.blocked || status.perInterface[interfaceName].blocked;
     if (blocked) warnings.push(AQUILIFER_ERRORS.RATE_LIMITED);
 
     return { warnings, blocked };
@@ -612,10 +602,12 @@ export default defineBackground(() => {
 
     let assembled = '';
     try {
-      await runChatStream(decrypted.provider, params, (delta) => {
-        assembled += delta;
-        send({ type: 'chunk', delta });
-      });
+      await trackActiveRequest(provider.id, () =>
+        runChatStream(decrypted.provider, params, (delta) => {
+          assembled += delta;
+          send({ type: 'chunk', delta });
+        }),
+      );
       await appendHistoryEntry({
         id: crypto.randomUUID(),
         origin,
@@ -735,10 +727,12 @@ export default defineBackground(() => {
 
     let chunkCount = 0;
     try {
-      await streamCall(decrypted.provider, params, (chunk) => {
-        chunkCount += 1;
-        send({ type: 'chunk', chunk });
-      });
+      await trackActiveRequest(provider.id, () =>
+        streamCall(decrypted.provider, params, (chunk) => {
+          chunkCount += 1;
+          send({ type: 'chunk', chunk });
+        }),
+      );
       await history.appendHistoryEntry({
         id: crypto.randomUUID(),
         origin,
@@ -870,7 +864,9 @@ export default defineBackground(() => {
         }
 
         try {
-          const result = await runChat(decrypted.provider, payload.params);
+          const result = await trackActiveRequest(provider.id, () =>
+            runChat(decrypted.provider, payload.params),
+          );
           await appendHistoryEntry({
             id: crypto.randomUUID(),
             origin,
@@ -963,9 +959,11 @@ export default defineBackground(() => {
         }
 
         try {
-          const result = await callAnthropicMessages(
-            decrypted.provider as AnthropicProvider,
-            payload.params,
+          const result = await trackActiveRequest(provider.id, () =>
+            callAnthropicMessages(
+              decrypted.provider as AnthropicProvider,
+              payload.params,
+            ),
           );
           await anthropicMessagesHistory.appendHistoryEntry({
             id: crypto.randomUUID(),
@@ -1035,9 +1033,11 @@ export default defineBackground(() => {
         }
 
         try {
-          const result = await callOpenAIChatCompletions(
-            decrypted.provider as OpenAICompatibleProvider,
-            payload.params,
+          const result = await trackActiveRequest(provider.id, () =>
+            callOpenAIChatCompletions(
+              decrypted.provider as OpenAICompatibleProvider,
+              payload.params,
+            ),
           );
           await openaiChatCompletionsHistory.appendHistoryEntry({
             id: crypto.randomUUID(),
