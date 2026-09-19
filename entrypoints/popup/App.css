@@ -1,24 +1,101 @@
 #root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+  padding: 16px;
+}
+
+.popup-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.popup-header .logo {
+  height: 28px;
+  width: 28px;
+}
+
+.popup-header h1 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.empty-state {
   text-align: center;
+  padding: 24px 0;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #54bc4ae0);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.empty-state p {
+  color: #666;
+  margin-bottom: 12px;
 }
 
-@keyframes logo-spin {
+.current-site {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #eee;
+}
+
+.current-site-label {
+  font-size: 13px;
+  margin: 0 0 8px;
+}
+
+.rate-bar {
+  height: 6px;
+  background: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.rate-bar-fill {
+  height: 100%;
+  background: #1a1a1a;
+  transition: width 300ms;
+}
+
+.rate-bar-label {
+  font-size: 11px;
+  color: #666;
+  margin: 6px 0 0;
+}
+
+.provider-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.provider-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.provider-type {
+  margin-left: 8px;
+  font-size: 11px;
+  color: #666;
+  text-transform: uppercase;
+}
+
+.provider-current-site {
+  margin-left: 8px;
+  font-size: 11px;
+  color: white;
+  background: #1a1a1a;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.in-use-spinner {
+  display: inline-block;
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
   from {
     transform: rotate(0deg);
   }
@@ -27,16 +104,7 @@
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
+.options-link {
+  width: 100%;
+  margin-top: 12px;
 }
