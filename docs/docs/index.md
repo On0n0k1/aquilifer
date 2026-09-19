@@ -17,6 +17,7 @@ However this project grows, these stay true — they're the entire point of it, 
 - **[Installing](/docs/installing)** — how to get it running today (it isn't on the Chrome Web Store yet).
 - **[Connecting a site](/docs/connecting)** — the approval flow, and what "connect once, then silent" actually means.
 - **[Providers](/docs/providers)** — Anthropic, OpenAI, and self-hosted/local models.
+- **[The toolbar popup](/docs/popup)** — the quick-glance view: what's connected, live rate-limit standing, switching models and the default provider.
 - **[Rate limiting](/docs/rate-limiting)** and **[History](/docs/history)** — the controls and the audit log that back the trust model.
 - **[The vault](/docs/vault)** — optional password-based encryption for stored API keys, and importantly, what it does *not* protect.
 - **[The page-facing API](/docs/api)** — for developers integrating Aquilifer into a website.

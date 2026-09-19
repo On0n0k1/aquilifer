@@ -32,6 +32,7 @@ export default defineConfig({
           items: [
             { text: 'Connecting a site', link: '/docs/connecting' },
             { text: 'Providers', link: '/docs/providers' },
+            { text: 'The toolbar popup', link: '/docs/popup' },
             { text: 'Rate limiting', link: '/docs/rate-limiting' },
             { text: 'History', link: '/docs/history' },
             { text: 'The vault', link: '/docs/vault' },

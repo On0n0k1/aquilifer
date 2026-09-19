@@ -9,6 +9,8 @@ Rate limits protect *your* usage — your spend, your quota — regardless of wh
 
 A request is blocked if it exceeds *either* limit. Both are configurable — window length and request count — from the **Rate limiting** tab in settings, with sensible defaults out of the box.
 
+[The toolbar popup](/docs/popup) shows the current site's real standing against these limits at a glance — whichever tier (global or per-interface) is closest to blocking, not just the configured threshold — so you can see it's getting close before it actually happens.
+
 ## What happens when a request is blocked
 
 - It fails immediately, without reaching the provider (no cost incurred).
