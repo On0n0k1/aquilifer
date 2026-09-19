@@ -101,7 +101,7 @@ function SecuritySection() {
       <h2>Security</h2>
       <p>
         The vault encrypts every provider's API key at rest, behind a password
-        you set here — it's optional, not the default. The motivating case is a
+        you set here. It's optional, not the default. The motivating case is a
         shared device (e.g. a family computer): without it, anyone using the
         browser profile can trigger paid LLM requests on any site you've already
         approved, with no further prompt. With it, those requests pause for an
@@ -110,7 +110,7 @@ function SecuritySection() {
       </p>
       <p>
         <strong>There is no password recovery.</strong> If you forget it,
-        encrypted keys are permanently unreadable — you'd need to delete and
+        encrypted keys are permanently unreadable. You'd need to delete and
         re-add those providers with a fresh API key.
       </p>
 
