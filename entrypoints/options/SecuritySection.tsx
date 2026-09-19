@@ -99,14 +99,11 @@ function SecuritySection() {
   return (
     <section>
       <h2>Security</h2>
+      <p>The vault enables encryption for your provider API keys.</p>
       <p>
-        The vault encrypts every provider's API key at rest, behind a password
-        you set here. It's optional, not the default. The motivating case is a
-        shared device (e.g. a family computer): without it, anyone using the
-        browser profile can trigger paid LLM requests on any site you've already
-        approved, with no further prompt. With it, those requests pause for an
-        unlock the first time after the browser starts, then stay unlocked for
-        the rest of that browser session.
+        Optional. When a website requests access to an LLM, a pop-up will ask
+        for the password. It stays unlocked for the rest of that browser
+        session.
       </p>
       <p>
         <strong>There is no password recovery.</strong> If you forget it,
