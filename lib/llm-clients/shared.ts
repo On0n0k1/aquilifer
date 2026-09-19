@@ -6,6 +6,14 @@ export interface ChatResult {
   model?: string;
 }
 
+/** One entry from a provider's own model-listing endpoint (SPEC §3) —
+ *  `label` is a human-readable name when the provider supplies one,
+ *  `id` otherwise. */
+export interface ModelInfo {
+  id: string;
+  label: string;
+}
+
 export async function describeError(response: Response): Promise<string> {
   const body = await response.text().catch(() => '');
   return `${PROVIDER_ERROR_PREFIX}${response.status}${body ? `: ${body.slice(0, 200)}` : ''}`;

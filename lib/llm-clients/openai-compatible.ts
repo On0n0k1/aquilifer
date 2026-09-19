@@ -7,9 +7,14 @@
 
 import type { OpenAICompatibleProvider } from '../providers';
 import type { AquiliferChatParams } from '../public-api';
-import { type ChatResult, describeError, readSseDataLines } from './shared';
+import {
+  type ChatResult,
+  describeError,
+  type ModelInfo,
+  readSseDataLines,
+} from './shared';
 
-function requestHeaders(provider: OpenAICompatibleProvider) {
+function requestHeaders(provider: Pick<OpenAICompatibleProvider, 'apiKey'>) {
   return {
     'content-type': 'application/json',
     ...(provider.apiKey ? { authorization: `Bearer ${provider.apiKey}` } : {}),
@@ -74,4 +79,28 @@ export async function streamOpenAICompatible(
     const delta = chunk.choices?.[0]?.delta?.content;
     if (delta) onDelta(delta);
   }
+}
+
+/**
+ * Lists models available from this base URL (SPEC §3) — same role as
+ * `listAnthropicModels`. Not every self-hosted OpenAI-compatible server
+ * implements `/v1/models` (unlike a single well-known vendor's official
+ * API), so callers need to treat a thrown error here as "unsupported,
+ * fall back to asking the user for a model name," not as a connectivity
+ * failure specifically.
+ */
+export async function listOpenAICompatibleModels(
+  provider: Pick<OpenAICompatibleProvider, 'baseUrl' | 'apiKey'>,
+): Promise<ModelInfo[]> {
+  const base = provider.baseUrl.replace(/\/+$/, '');
+
+  const response = await fetch(`${base}/v1/models`, {
+    headers: requestHeaders(provider),
+  });
+
+  if (!response.ok) throw new Error(await describeError(response));
+
+  const data = (await response.json()) as { data?: { id: string }[] };
+
+  return (data.data ?? []).map((model) => ({ id: model.id, label: model.id }));
 }

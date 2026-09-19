@@ -5,7 +5,12 @@
 
 import type { AnthropicProvider } from '../providers';
 import type { AquiliferChatParams } from '../public-api';
-import { type ChatResult, describeError, readSseDataLines } from './shared';
+import {
+  type ChatResult,
+  describeError,
+  type ModelInfo,
+  readSseDataLines,
+} from './shared';
 
 const ANTHROPIC_API_VERSION = '2023-06-01';
 const DEFAULT_MAX_TOKENS = 1024;
@@ -33,7 +38,7 @@ function buildRequestBody(
   };
 }
 
-function requestHeaders(provider: AnthropicProvider) {
+function requestHeaders(provider: Pick<AnthropicProvider, 'apiKey'>) {
   return {
     'content-type': 'application/json',
     'x-api-key': provider.apiKey,
@@ -108,4 +113,29 @@ export async function streamAnthropic(
       onDelta(event.delta.text);
     }
   }
+}
+
+/**
+ * Lists models available to this API key (SPEC §3) — used both to populate
+ * the add-provider flow's auto-picked default and the popup's model
+ * switcher, and, since a successful call already proves the key works, as
+ * the add-provider verification step itself (no separate test chat needed).
+ */
+export async function listAnthropicModels(
+  provider: Pick<AnthropicProvider, 'apiKey'>,
+): Promise<ModelInfo[]> {
+  const response = await fetch('https://api.anthropic.com/v1/models', {
+    headers: requestHeaders(provider),
+  });
+
+  if (!response.ok) throw new Error(await describeError(response));
+
+  const data = (await response.json()) as {
+    data?: { id: string; display_name?: string }[];
+  };
+
+  return (data.data ?? []).map((model) => ({
+    id: model.id,
+    label: model.display_name ?? model.id,
+  }));
 }
