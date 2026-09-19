@@ -95,6 +95,35 @@ describe('providers configured', () => {
     ).toBeInTheDocument();
   });
 
+  it('disconnecting the current site revokes it and reverts to not-connected', async () => {
+    mockActiveTabUrl('https://example.com/');
+    await browser.storage.local.set({
+      originGrants: { 'https://example.com': PROVIDER.id },
+    });
+    const sendMessage = vi
+      .spyOn(browser.runtime, 'sendMessage')
+      .mockImplementation(async (message) => {
+        if ((message as { type?: string })?.type === 'getActiveRequests') {
+          return { activeProviderIds: [] };
+        }
+        return undefined;
+      });
+
+    render(<App />);
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Disconnect' }),
+    );
+
+    expect(sendMessage).toHaveBeenCalledWith({
+      kind: 'aquilifer-internal',
+      type: 'revokeOrigin',
+      origin: 'https://example.com',
+    });
+    expect(
+      await screen.findByText("This site isn't connected to a provider."),
+    ).toBeInTheDocument();
+  });
+
   it('shows the in-use indicator only for a provider with an active request', async () => {
     vi.spyOn(browser.runtime, 'sendMessage').mockResolvedValue({
       activeProviderIds: [PROVIDER.id],

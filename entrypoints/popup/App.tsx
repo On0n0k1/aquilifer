@@ -75,6 +75,7 @@ function App() {
   const [defaultProviderId, setDefaultProviderIdState] = useState<
     string | undefined
   >();
+  const [siteOrigin, setSiteOrigin] = useState<string | undefined>();
   const [siteProviderId, setSiteProviderId] = useState<string | undefined>();
   const [siteStatus, setSiteStatus] = useState<OriginRateLimitStatus | null>(
     null,
@@ -96,6 +97,7 @@ function App() {
       .then(async ([tab]) => {
         const origin = originOf(tab?.url);
         if (!origin) return;
+        setSiteOrigin(origin);
 
         const grants = await loadOriginGrants();
         const providerId = grants[origin];
@@ -178,6 +180,21 @@ function App() {
     setDefaultProviderIdState(id);
   }
 
+  /** Revokes the current site's connection — the next request it makes
+   *  goes through the connect/approve flow again from scratch, same as
+   *  Options' own Connected sites tab, just scoped to whichever tab the
+   *  popup was opened on. */
+  async function handleDisconnectSite() {
+    if (!siteOrigin) return;
+    await browser.runtime.sendMessage({
+      kind: AQUILIFER_INTERNAL_KIND,
+      type: 'revokeOrigin',
+      origin: siteOrigin,
+    });
+    setSiteProviderId(undefined);
+    setSiteStatus(null);
+  }
+
   const siteProvider = providers.find((p) => p.id === siteProviderId);
   const worst = siteStatus ? worstTier(siteStatus) : null;
 
@@ -217,6 +234,11 @@ function App() {
                   {worst.count} / {worst.threshold} requests in the current
                   window
                 </p>
+                <div className="current-site-actions">
+                  <button type="button" onClick={handleDisconnectSite}>
+                    Disconnect
+                  </button>
+                </div>
               </>
             ) : (
               <p className="current-site-label">

@@ -75,6 +75,12 @@
   margin: 6px 0 0;
 }
 
+.current-site-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
 .provider-list {
   list-style: none;
   padding: 0;
@@ -98,6 +104,7 @@
 
 .provider-row-actions {
   display: flex;
+  justify-content: flex-end;
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
