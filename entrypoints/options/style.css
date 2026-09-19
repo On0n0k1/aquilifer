@@ -23,6 +23,13 @@ main {
   padding: 32px 20px;
 }
 
+/* History entries can carry full markdown-rendered LLM responses (code
+ * blocks especially need horizontal room) — wider than the other tabs'
+ * shared form-width layout, applied only to History (App.tsx). */
+main.wide {
+  max-width: 860px;
+}
+
 h1 {
   font-size: 20px;
   margin: 0 0 24px;
@@ -160,7 +167,7 @@ section {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  max-height: 320px;
+  max-height: 640px;
   overflow-y: auto;
 }
 
@@ -198,6 +205,11 @@ section {
   word-break: break-word;
 }
 
+.history-prompt-role {
+  font-weight: 600;
+  margin-right: 4px;
+}
+
 .history-result {
   font-size: 12px;
   color: var(--color-bg);
@@ -209,6 +221,92 @@ section {
   color: var(--color-red);
   font-weight: 600;
   word-break: break-word;
+}
+
+/* Rendered markdown (SPEC §7) — real LLM output, so it needs its own
+ * element styling rather than just inheriting the plain-text rules above.
+ * Colors here are tuned for sitting on the parchment card specifically:
+ * gold reads poorly on parchment (both light, low contrast), so links use
+ * a darkened gold-brown instead of the palette's usual gold accent. */
+.markdown-content > :first-child {
+  margin-top: 0;
+}
+
+.markdown-content > :last-child {
+  margin-bottom: 0;
+}
+
+.markdown-content p {
+  margin: 6px 0;
+}
+
+.markdown-content :where(h1, h2, h3, h4, h5, h6) {
+  /* Explicit, not inherited: the app's global h1/h2 rules (page/section
+   * titles) are gold, which measures well under WCAG's 4.5:1 minimum
+   * against this parchment background (~2:1) — fine on the dark base
+   * they're designed for, not here. */
+  color: var(--color-bg);
+  font-size: 13px;
+  font-weight: 700;
+  margin: 10px 0 4px;
+}
+
+.markdown-content ul,
+.markdown-content ol {
+  margin: 6px 0;
+  padding-left: 20px;
+}
+
+.markdown-content li {
+  margin: 2px 0;
+}
+
+.markdown-content a {
+  color: #7a5f14;
+}
+
+.markdown-content blockquote {
+  margin: 6px 0;
+  padding-left: 10px;
+  border-left: 3px solid rgba(20, 38, 28, 0.25);
+  opacity: 0.85;
+}
+
+.markdown-content code {
+  font-family: ui-monospace, "SF Mono", Consolas, monospace;
+  font-size: 11px;
+  background: rgba(20, 38, 28, 0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.markdown-content pre {
+  margin: 8px 0;
+  padding: 8px 10px;
+  background: #e8e2d5;
+  border: 1px solid rgba(20, 38, 28, 0.15);
+  border-radius: 6px;
+  overflow-x: auto;
+}
+
+.markdown-content pre code {
+  background: none;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.markdown-content table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 11px;
+}
+
+.markdown-content th,
+.markdown-content td {
+  border: 1px solid rgba(20, 38, 28, 0.2);
+  padding: 4px 8px;
+  text-align: left;
 }
 
 form {

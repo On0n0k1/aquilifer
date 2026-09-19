@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import * as anthropicMessagesHistory from '../../lib/history/anthropic-messages';
 import {
   clearHistory as clearGenericHistory,
@@ -29,6 +31,19 @@ function WarningTags({ warnings }: { warnings?: string[] }) {
           ⚠ {WARNING_LABELS[warning] ?? warning}
         </span>
       ))}
+    </div>
+  );
+}
+
+/** Renders a generic-interface chat message as markdown (SPEC §7) — real
+ *  natural-language LLM output, unlike the provider-specific interfaces'
+ *  requestSummary/responseSummary below, which are raw JSON snippets and
+ *  stay plain text. No raw-HTML plugin enabled, so this can't be used to
+ *  inject markup even if a response tried to. */
+function MarkdownMessage({ content }: { content: string }) {
+  return (
+    <div className="markdown-content">
+      <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
     </div>
   );
 }
@@ -70,7 +85,10 @@ function GenericHistoryList() {
                 <WarningTags warnings={entry.warnings} />
                 {lastMessage && (
                   <div className="history-prompt">
-                    {lastMessage.role}: {lastMessage.content}
+                    <span className="history-prompt-role">
+                      {lastMessage.role}:
+                    </span>
+                    <MarkdownMessage content={lastMessage.content} />
                   </div>
                 )}
                 <div
@@ -78,9 +96,11 @@ function GenericHistoryList() {
                     entry.outcome.ok ? 'history-result' : 'history-error'
                   }
                 >
-                  {entry.outcome.ok
-                    ? entry.outcome.message
-                    : entry.outcome.error}
+                  {entry.outcome.ok ? (
+                    <MarkdownMessage content={entry.outcome.message} />
+                  ) : (
+                    entry.outcome.error
+                  )}
                 </div>
               </li>
             );
