@@ -1,12 +1,19 @@
 import { useCallback, useEffect, useState } from 'react';
 import aquiliferLogo from '/aquila.png';
+import { AQUILIFER_ERRORS } from '../../lib/errors';
 import { AQUILIFER_INTERNAL_KIND } from '../../lib/internal-protocol';
+import { listModels, type ModelInfo } from '../../lib/llm-clients';
 import { loadOriginGrants } from '../../lib/permissions';
-import { listProviders, type ProviderConfig } from '../../lib/providers';
+import {
+  listProviders,
+  type ProviderConfig,
+  saveProvider,
+} from '../../lib/providers';
 import {
   computeOriginRateLimitStatus,
   type OriginRateLimitStatus,
 } from '../../lib/rate-limits';
+import { resolveApiKey } from '../../lib/vault';
 import './App.css';
 
 // The popup is short-lived (open only while the user is looking at it), so
@@ -55,6 +62,12 @@ function worstTier(status: OriginRateLimitStatus): WorstTier {
     );
 }
 
+interface ModelPickerState {
+  status: 'loading' | 'ready' | 'error';
+  models?: ModelInfo[];
+  error?: string;
+}
+
 function App() {
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
   const [siteProviderId, setSiteProviderId] = useState<string | undefined>();
@@ -64,6 +77,7 @@ function App() {
   const [activeProviderIds, setActiveProviderIds] = useState<Set<string>>(
     new Set(),
   );
+  const [pickers, setPickers] = useState<Record<string, ModelPickerState>>({});
 
   useEffect(() => {
     listProviders().then(setProviders);
@@ -107,6 +121,46 @@ function App() {
 
   function openOptions() {
     browser.runtime.openOptionsPage();
+  }
+
+  async function openModelPicker(provider: ProviderConfig) {
+    setPickers((prev) => ({ ...prev, [provider.id]: { status: 'loading' } }));
+    try {
+      const apiKey = provider.apiKey
+        ? await resolveApiKey(provider.apiKey)
+        : undefined;
+      const models = await listModels(
+        provider.type === 'anthropic'
+          ? { type: 'anthropic', apiKey: apiKey ?? '' }
+          : { type: 'openai-compatible', baseUrl: provider.baseUrl, apiKey },
+      );
+      setPickers((prev) => ({
+        ...prev,
+        [provider.id]: { status: 'ready', models },
+      }));
+    } catch (error) {
+      const message =
+        error instanceof Error &&
+        error.message === AQUILIFER_ERRORS.VAULT_LOCKED
+          ? 'Unlock the vault (Security tab in Options) to change the model.'
+          : error instanceof Error
+            ? error.message
+            : 'unknown error';
+      setPickers((prev) => ({
+        ...prev,
+        [provider.id]: { status: 'error', error: message },
+      }));
+    }
+  }
+
+  async function handleSelectModel(provider: ProviderConfig, model: string) {
+    await saveProvider({ ...provider, model, resolvedModel: undefined });
+    setProviders(await listProviders());
+    setPickers((prev) => {
+      const next = { ...prev };
+      delete next[provider.id];
+      return next;
+    });
   }
 
   const siteProvider = providers.find((p) => p.id === siteProviderId);
@@ -157,27 +211,62 @@ function App() {
           </section>
 
           <ul className="provider-list">
-            {providers.map((provider) => (
-              <li key={provider.id}>
-                <div>
-                  <strong>{provider.label}</strong>
-                  <span className="provider-type">{provider.type}</span>
-                  {provider.id === siteProviderId && (
-                    <span className="provider-current-site">this site</span>
+            {providers.map((provider) => {
+              const picker = pickers[provider.id];
+              return (
+                <li key={provider.id}>
+                  <div className="provider-row-main">
+                    <div>
+                      <strong>{provider.label}</strong>
+                      <span className="provider-type">{provider.type}</span>
+                      {provider.id === siteProviderId && (
+                        <span className="provider-current-site">this site</span>
+                      )}
+                      <div className="provider-detail">{provider.model}</div>
+                    </div>
+                    <div className="provider-row-actions">
+                      {activeProviderIds.has(provider.id) && (
+                        <span
+                          className="in-use-spinner"
+                          role="img"
+                          aria-label="In use right now"
+                          title="In use right now"
+                        >
+                          ⚙
+                        </span>
+                      )}
+                      {picker?.status === 'ready' ? (
+                        <select
+                          value={provider.model}
+                          onChange={(event) =>
+                            handleSelectModel(provider, event.target.value)
+                          }
+                        >
+                          {picker.models?.map((model) => (
+                            <option key={model.id} value={model.id}>
+                              {model.label}
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => openModelPicker(provider)}
+                          disabled={picker?.status === 'loading'}
+                        >
+                          {picker?.status === 'loading'
+                            ? 'Loading…'
+                            : 'Change model'}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  {picker?.status === 'error' && (
+                    <p className="model-picker-error">{picker.error}</p>
                   )}
-                </div>
-                {activeProviderIds.has(provider.id) && (
-                  <span
-                    className="in-use-spinner"
-                    role="img"
-                    aria-label="In use right now"
-                    title="In use right now"
-                  >
-                    ⚙
-                  </span>
-                )}
-              </li>
-            ))}
+                </li>
+              );
+            })}
           </ul>
 
           <button type="button" className="options-link" onClick={openOptions}>

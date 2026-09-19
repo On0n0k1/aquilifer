@@ -83,11 +83,44 @@
 
 .provider-list li {
   display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.provider-row-main {
+  display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.provider-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.provider-row-actions button {
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.provider-row-actions select {
+  font-size: 11px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--color-gold);
+  background: var(--color-bg);
+  color: var(--color-parchment);
+  max-width: 140px;
+}
+
+.model-picker-error {
+  font-size: 11px;
+  color: var(--color-red);
+  margin: 0;
 }
 
 .provider-list li strong {
