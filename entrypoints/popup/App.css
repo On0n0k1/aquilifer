@@ -17,6 +17,8 @@
 .popup-header h1 {
   font-size: 15px;
   margin: 0;
+  color: var(--color-gold);
+  letter-spacing: 0.02em;
 }
 
 .empty-state {
@@ -25,14 +27,15 @@
 }
 
 .empty-state p {
-  color: #666;
+  color: var(--color-parchment);
+  opacity: 0.8;
   margin-bottom: 12px;
 }
 
 .current-site {
   margin-bottom: 16px;
   padding-bottom: 16px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.25);
 }
 
 .current-site-label {
@@ -40,22 +43,35 @@
   margin: 0 0 8px;
 }
 
+.current-site-label strong {
+  color: var(--color-gold);
+}
+
 .rate-bar {
   height: 6px;
-  background: #eee;
+  background: rgba(242, 237, 228, 0.12);
   border-radius: 3px;
   overflow: hidden;
 }
 
 .rate-bar-fill {
   height: 100%;
-  background: #1a1a1a;
-  transition: width 300ms;
+  background: var(--color-gold);
+  transition:
+    width 300ms,
+    background-color 300ms;
+}
+
+/* Oxblood red is a sparing accent only (SPEC §15) — reserved for this one
+ * alert state, not the bar's normal color. */
+.rate-bar-fill.near-limit {
+  background: var(--color-red);
 }
 
 .rate-bar-label {
   font-size: 11px;
-  color: #666;
+  color: var(--color-parchment);
+  opacity: 0.7;
   margin: 6px 0 0;
 }
 
@@ -71,27 +87,36 @@
   align-items: center;
   gap: 12px;
   padding: 10px 0;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.provider-list li strong {
+  color: var(--color-gold);
 }
 
 .provider-type {
   margin-left: 8px;
   font-size: 11px;
-  color: #666;
+  color: var(--color-parchment);
+  opacity: 0.6;
   text-transform: uppercase;
 }
 
 .provider-current-site {
   margin-left: 8px;
   font-size: 11px;
-  color: white;
-  background: #1a1a1a;
+  font-weight: 600;
+  color: var(--color-bg);
+  background: var(--color-gold);
   padding: 2px 6px;
   border-radius: 4px;
 }
 
+/* An active-state indicator (SPEC §15) — the other legitimate use of the
+ * red accent alongside the near-limit rate bar. */
 .in-use-spinner {
   display: inline-block;
+  color: var(--color-red);
   animation: spin 1.2s linear infinite;
 }
 

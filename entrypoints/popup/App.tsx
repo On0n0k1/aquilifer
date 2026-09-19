@@ -15,6 +15,11 @@ import './App.css';
 // design) specifically because there's no long-lived state to keep in sync.
 const ACTIVE_REQUEST_POLL_MS = 1000;
 
+// Oxblood red is a sparing accent only (SPEC §15) — the rate bar stays gold
+// until a site is genuinely close to being blocked, not proportionally
+// blended from the start.
+const NEAR_LIMIT_PERCENT = 80;
+
 function originOf(url: string | undefined): string | undefined {
   if (!url) return undefined;
   try {
@@ -135,7 +140,7 @@ function App() {
                   title={`${worst.count} / ${worst.threshold} requests in the current window`}
                 >
                   <div
-                    className="rate-bar-fill"
+                    className={`rate-bar-fill${worst.percent >= NEAR_LIMIT_PERCENT ? ' near-limit' : ''}`}
                     style={{ width: `${Math.min(worst.percent, 100)}%` }}
                   />
                 </div>

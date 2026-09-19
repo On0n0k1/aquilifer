@@ -1,21 +1,33 @@
+/* Aquilifer color palette (SPEC §15) — trialed here first before rolling
+ * out to Options/Approve/Blocked. Deep moss green is the fixed brand base,
+ * not a light/dark-mode-following neutral, so there's no
+ * prefers-color-scheme branching here on purpose. */
+:root {
+  --color-bg: #14261c;
+  --color-gold: #c9a227;
+  --color-red: #8b1e1e;
+  --color-parchment: #f2ede4;
+}
+
 body {
   margin: 0;
   width: 320px;
   font-family: system-ui, sans-serif;
-  color: #1a1a1a;
-  background-color: #ffffff;
+  color: var(--color-parchment);
+  background-color: var(--color-bg);
 }
 
 button {
   border-radius: 6px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--color-gold);
   padding: 6px 12px;
   font-size: 13px;
   font-family: inherit;
-  background-color: #f9f9f9;
+  color: var(--color-gold);
+  background-color: rgba(201, 162, 39, 0.08);
   cursor: pointer;
 }
 
 button:hover {
-  border-color: #1a1a1a;
+  background-color: rgba(201, 162, 39, 0.18);
 }
