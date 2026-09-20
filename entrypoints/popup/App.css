@@ -134,6 +134,7 @@
   align-items: center;
   gap: 8px;
   margin: 0 6px;
+  padding: 0 5%;
 }
 
 /* The model name and the dropdown that replaces it while editing share
