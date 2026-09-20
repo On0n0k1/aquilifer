@@ -29,19 +29,157 @@ export default defineConfig({
         {
           text: 'Getting started',
           items: [
-            { text: 'Overview', link: '/docs/' },
-            { text: 'Installing', link: '/docs/installing' },
+            {
+              text: 'Overview',
+              link: '/docs/',
+              items: [
+                {
+                  text: 'The three things that never change',
+                  link: '/docs/#the-three-things-that-never-change',
+                },
+                {
+                  text: "What's on this page vs. the rest of the docs",
+                  link: '/docs/#what-s-on-this-page-vs-the-rest-of-the-docs',
+                },
+              ],
+            },
+            {
+              text: 'Installing',
+              link: '/docs/installing',
+              items: [
+                { text: 'Requirements', link: '/docs/installing#requirements' },
+                { text: 'Build it', link: '/docs/installing#build-it' },
+                {
+                  text: 'Load it into your browser',
+                  link: '/docs/installing#load-it-into-your-browser',
+                },
+                {
+                  text: 'Staying up to date',
+                  link: '/docs/installing#staying-up-to-date',
+                },
+              ],
+            },
           ],
         },
         {
           text: 'Using Aquilifer',
           items: [
-            { text: 'Connecting a site', link: '/docs/connecting' },
-            { text: 'Providers', link: '/docs/providers' },
-            { text: 'The toolbar popup', link: '/docs/popup' },
-            { text: 'Rate limiting', link: '/docs/rate-limiting' },
-            { text: 'History', link: '/docs/history' },
-            { text: 'The vault', link: '/docs/vault' },
+            {
+              text: 'Connecting a site',
+              link: '/docs/connecting',
+              items: [
+                {
+                  text: 'Connect once, then silent',
+                  link: '/docs/connecting#connect-once-then-silent',
+                },
+                {
+                  text: 'Switching providers',
+                  link: '/docs/connecting#switching-providers',
+                },
+                {
+                  text: 'What if you close the popup without answering?',
+                  link: '/docs/connecting#what-if-you-close-the-popup-without-answering',
+                },
+                {
+                  text: 'Managing connected sites',
+                  link: '/docs/connecting#managing-connected-sites',
+                },
+              ],
+            },
+            {
+              text: 'Providers',
+              link: '/docs/providers',
+              items: [
+                {
+                  text: 'Two kinds of provider',
+                  link: '/docs/providers#two-kinds-of-provider',
+                },
+                {
+                  text: 'Adding a provider',
+                  link: '/docs/providers#adding-a-provider',
+                },
+                {
+                  text: 'Default provider and switching',
+                  link: '/docs/providers#default-provider-and-switching',
+                },
+                {
+                  text: 'Removing a provider',
+                  link: '/docs/providers#removing-a-provider',
+                },
+              ],
+            },
+            {
+              text: 'The toolbar popup',
+              link: '/docs/popup',
+              items: [
+                { text: 'What it shows', link: '/docs/popup#what-it-shows' },
+                {
+                  text: 'Managing providers from here',
+                  link: '/docs/popup#managing-providers-from-here',
+                },
+              ],
+            },
+            {
+              text: 'Rate limiting',
+              link: '/docs/rate-limiting',
+              items: [
+                { text: 'Two tiers', link: '/docs/rate-limiting#two-tiers' },
+                {
+                  text: 'What happens when a request is blocked',
+                  link: '/docs/rate-limiting#what-happens-when-a-request-is-blocked',
+                },
+                {
+                  text: 'A note for large requests',
+                  link: '/docs/rate-limiting#a-note-for-large-requests',
+                },
+                {
+                  text: "A note if you're integrating Aquilifer as a fallback",
+                  link: '/docs/rate-limiting#a-note-if-you-re-integrating-aquilifer-as-a-fallback',
+                },
+              ],
+            },
+            {
+              text: 'History',
+              link: '/docs/history',
+              items: [
+                {
+                  text: "It's audit-only, never replayed",
+                  link: '/docs/history#it-s-audit-only-never-replayed',
+                },
+                {
+                  text: 'Kept separately per interface',
+                  link: '/docs/history#kept-separately-per-interface',
+                },
+                {
+                  text: 'Dark or light entry cards',
+                  link: '/docs/history#dark-or-light-entry-cards',
+                },
+                {
+                  text: "What it doesn't do",
+                  link: '/docs/history#what-it-doesn-t-do',
+                },
+              ],
+            },
+            {
+              text: 'The vault',
+              link: '/docs/vault',
+              items: [
+                {
+                  text: 'Read this before turning it on',
+                  link: '/docs/vault#read-this-before-turning-it-on',
+                },
+                {
+                  text: "Why you'd turn it on",
+                  link: '/docs/vault#why-you-d-turn-it-on',
+                },
+                { text: 'Setting it up', link: '/docs/vault#setting-it-up' },
+                {
+                  text: 'Locking and unlocking',
+                  link: '/docs/vault#locking-and-unlocking',
+                },
+                { text: 'Turning it off', link: '/docs/vault#turning-it-off' },
+              ],
+            },
           ],
         },
         {
@@ -81,7 +219,28 @@ export default defineConfig({
         {
           text: 'Honesty',
           items: [
-            { text: 'Limitations & downsides', link: '/docs/limitations' },
+            {
+              text: 'Limitations & downsides',
+              link: '/docs/limitations',
+              items: [
+                {
+                  text: 'Security & storage',
+                  link: '/docs/limitations#security-storage',
+                },
+                {
+                  text: "What Aquilifer doesn't do",
+                  link: '/docs/limitations#what-aquilifer-doesn-t-do',
+                },
+                {
+                  text: 'Platform & maturity',
+                  link: '/docs/limitations#platform-maturity',
+                },
+                {
+                  text: 'Found something not listed here?',
+                  link: '/docs/limitations#found-something-not-listed-here',
+                },
+              ],
+            },
           ],
         },
       ],
