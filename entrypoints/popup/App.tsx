@@ -253,24 +253,30 @@ function App() {
               return (
                 <li key={provider.id}>
                   <div className="provider-row-main">
-                    <strong>{provider.label}</strong>
-                    <span className="provider-type">{provider.type}</span>
-                    {provider.id === siteProviderId && (
-                      <span className="provider-current-site">this site</span>
-                    )}
-                    {provider.id === defaultProviderId && (
-                      <span className="provider-default">default</span>
-                    )}
-                    {activeProviderIds.has(provider.id) && (
-                      <span
-                        className="in-use-spinner"
-                        role="img"
-                        aria-label="In use right now"
-                        title="In use right now"
-                      >
-                        ⚙
-                      </span>
-                    )}
+                    <div className="provider-row-col">
+                      <strong>{provider.label}</strong>
+                    </div>
+                    <div className="provider-row-col">
+                      <span className="provider-type">{provider.type}</span>
+                    </div>
+                    <div className="provider-row-col">
+                      {provider.id === siteProviderId && (
+                        <span className="provider-current-site">this site</span>
+                      )}
+                      {provider.id === defaultProviderId && (
+                        <span className="provider-default">default</span>
+                      )}
+                      {activeProviderIds.has(provider.id) && (
+                        <span
+                          className="in-use-spinner"
+                          role="img"
+                          aria-label="In use right now"
+                          title="In use right now"
+                        >
+                          ⚙
+                        </span>
+                      )}
+                    </div>
                   </div>
                   <div className="provider-detail">{provider.model}</div>
                   <div className="provider-row-actions">

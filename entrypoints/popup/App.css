@@ -95,11 +95,31 @@
   border-bottom: 1px solid rgba(201, 162, 39, 0.15);
 }
 
+/* Three equal columns (label / type / status badges) — same flex: 1
+ * pattern as the settings tabs (.page-tab/.tab): equal thirds by default,
+ * but a column whose content doesn't fit still grows past its share
+ * rather than being clipped, and the others shrink to make room. Plain
+ * space-between (tried first) pushed content to the far edges instead,
+ * which looked disconnected with only two items present. */
 .provider-row-main {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 8px;
+}
+
+.provider-row-col {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+/* Small, muted, centered — was entirely unstyled before, which read as an
+ * oversight sitting directly under .provider-row-main's own styling. */
+.provider-detail {
+  text-align: center;
+  font-size: 11px;
+  color: var(--color-parchment);
+  opacity: 0.6;
 }
 
 .provider-row-actions {
