@@ -11,7 +11,11 @@
 
 body {
   margin: 0;
-  width: 320px;
+  /* +2em over the previous 320px, in the standard 1em = 16px sense — not
+   * literally 2 * the popup's own computed font-size (12px, a Chrome
+   * popup-default quirk unrelated to this stylesheet), which would read
+   * as a much smaller bump than intended. */
+  width: 352px;
   font-family: system-ui, sans-serif;
   color: var(--color-parchment);
   background-color: var(--color-bg);
