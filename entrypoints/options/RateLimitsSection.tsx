@@ -111,7 +111,10 @@ function RateLimitsSection() {
           />
         </label>
 
-        <label className="checkbox-option">
+        <label
+          className="checkbox-option"
+          title="Show a browser notification whenever a request gets blocked by your rate limit."
+        >
           <input
             type="checkbox"
             checked={rateLimits.notifyOnBlock}
@@ -125,7 +128,10 @@ function RateLimitsSection() {
           Turn on notification
         </label>
 
-        <label className="checkbox-option">
+        <label
+          className="checkbox-option"
+          title="Open a small popup window whenever a request gets blocked by your rate limit."
+        >
           <input
             type="checkbox"
             checked={rateLimits.showPopupOnBlock}
