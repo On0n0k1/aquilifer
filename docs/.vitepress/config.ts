@@ -32,6 +32,7 @@ export default defineConfig({
             {
               text: 'Overview',
               link: '/docs/',
+              collapsed: true,
               items: [
                 {
                   text: 'The three things that never change',
@@ -46,6 +47,7 @@ export default defineConfig({
             {
               text: 'Installing',
               link: '/docs/installing',
+              collapsed: true,
               items: [
                 { text: 'Requirements', link: '/docs/installing#requirements' },
                 { text: 'Build it', link: '/docs/installing#build-it' },
@@ -67,6 +69,7 @@ export default defineConfig({
             {
               text: 'Connecting a site',
               link: '/docs/connecting',
+              collapsed: true,
               items: [
                 {
                   text: 'Connect once, then silent',
@@ -89,6 +92,7 @@ export default defineConfig({
             {
               text: 'Providers',
               link: '/docs/providers',
+              collapsed: true,
               items: [
                 {
                   text: 'Two kinds of provider',
@@ -111,6 +115,7 @@ export default defineConfig({
             {
               text: 'The toolbar popup',
               link: '/docs/popup',
+              collapsed: true,
               items: [
                 { text: 'What it shows', link: '/docs/popup#what-it-shows' },
                 {
@@ -122,6 +127,7 @@ export default defineConfig({
             {
               text: 'Rate limiting',
               link: '/docs/rate-limiting',
+              collapsed: true,
               items: [
                 { text: 'Two tiers', link: '/docs/rate-limiting#two-tiers' },
                 {
@@ -141,6 +147,7 @@ export default defineConfig({
             {
               text: 'History',
               link: '/docs/history',
+              collapsed: true,
               items: [
                 {
                   text: "It's audit-only, never replayed",
@@ -163,6 +170,7 @@ export default defineConfig({
             {
               text: 'The vault',
               link: '/docs/vault',
+              collapsed: true,
               items: [
                 {
                   text: 'Read this before turning it on',
@@ -188,6 +196,7 @@ export default defineConfig({
             {
               text: 'The page-facing API',
               link: '/docs/api',
+              collapsed: true,
               items: [
                 {
                   text: 'Before you start',
@@ -222,6 +231,7 @@ export default defineConfig({
             {
               text: 'Limitations & downsides',
               link: '/docs/limitations',
+              collapsed: true,
               items: [
                 {
                   text: 'Security & storage',
