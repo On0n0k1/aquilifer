@@ -1,4 +1,12 @@
+/* Aquilifer color palette (SPEC §15) — same tokens as the popup/Options/
+ * Approve. This previously used plain black-on-white browser-default
+ * styling instead of the shared theme; brought in line with the rest of
+ * the extension. */
 :root {
+  --color-bg: #14261c;
+  --color-gold: #c9a227;
+  --color-parchment: #f2ede4;
+
   /* Type scale — every font-size in this stylesheet reads from one of
    * these instead of a literal px value, so a single multiplier can
    * resize all of them together (planned: a settings-page font-size
@@ -16,7 +24,8 @@ body {
    * instead of silently falling back to the browser's own small ambient
    * default. */
   font-size: var(--font-size-md);
-  color: #1a1a1a;
+  color: var(--color-parchment);
+  background-color: var(--color-bg);
 }
 
 main {
@@ -26,6 +35,7 @@ main {
 h1 {
   font-size: var(--font-size-xl);
   margin: 0 0 12px;
+  color: var(--color-gold);
 }
 
 p {
@@ -33,10 +43,13 @@ p {
   line-height: 1.4;
 }
 
-/* break-all lives here rather than on the whole paragraph — the origin
+/* The origin is the one thing worth drawing the eye to here, same role
+ * gold plays everywhere else (headers, key interactive elements).
+ * break-all lives here rather than on the whole paragraph — the origin
  * has no spaces to wrap on and needs it, but applying it to the ordinary
  * sentence text around it breaks normal words mid-word for no reason. */
 p strong {
+  color: var(--color-gold);
   word-break: break-all;
 }
 
@@ -60,14 +73,21 @@ p strong {
   margin-top: 20px;
 }
 
+/* The one action here ("OK") is the sole/primary action, so it gets the
+ * same solid-gold-fill treatment as approve.html's primary Approve
+ * button, not the outlined secondary style. */
 button {
   flex: 1;
   padding: 8px 12px;
   font-size: var(--font-size-md);
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-gold);
   cursor: pointer;
-  background: #1a1a1a;
-  color: white;
-  border-color: #1a1a1a;
+  background: var(--color-gold);
+  color: var(--color-bg);
+  font-weight: 600;
+}
+
+button:hover {
+  background: #ddb62d;
 }
