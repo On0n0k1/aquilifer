@@ -1,6 +1,6 @@
 {
   "name": "aquilifer",
-  "description": "Browser extension LLM provider",
+  "description": "A secure LLM provider for the web: websites ask for completions, never see your API key.",
   "license": "Apache-2.0",
   "private": true,
   "version": "1.5.0",

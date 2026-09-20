@@ -23,3 +23,4 @@ However this project grows, these stay true: they're the entire point of it, not
 - **[Appearance](/docs/appearance)**: font size and the toolbar popup's width.
 - **[The page-facing API](/docs/api)**: for developers integrating Aquilifer into a website.
 - **[Limitations & downsides](/docs/limitations)**: read this one. Every project has tradeoffs; this page is where they're written down instead of left for you to discover.
+- **[Privacy policy](/docs/privacy)**: what's stored, what's sent over the network and to whom, and that there's no analytics or tracking anywhere in the extension.

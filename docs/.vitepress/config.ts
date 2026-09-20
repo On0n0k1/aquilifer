@@ -363,6 +363,37 @@ export default defineConfig({
                 },
               ],
             },
+            {
+              text: 'Privacy policy',
+              link: '/docs/privacy',
+              collapsed: true,
+              items: [
+                {
+                  text: 'The short version',
+                  link: '/docs/privacy#the-short-version',
+                },
+                {
+                  text: 'What Aquilifer stores, and where',
+                  link: '/docs/privacy#what-aquilifer-stores-and-where',
+                },
+                {
+                  text: 'What Aquilifer sends over the network, and to whom',
+                  link: '/docs/privacy#what-aquilifer-sends-over-the-network-and-to-whom',
+                },
+                {
+                  text: 'No analytics, no tracking',
+                  link: '/docs/privacy#no-analytics-no-tracking',
+                },
+                {
+                  text: 'Your control over this data',
+                  link: '/docs/privacy#your-control-over-this-data',
+                },
+                {
+                  text: 'Permissions this extension requests',
+                  link: '/docs/privacy#permissions-this-extension-requests',
+                },
+              ],
+            },
           ],
         },
       ],
