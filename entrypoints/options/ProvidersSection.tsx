@@ -230,7 +230,7 @@ function ProvidersSection() {
               <li key={provider.id}>
                 <div className="provider-row-top">
                   <div className="provider-row-main">
-                    <div className="provider-row-col">
+                    <div className="provider-row-col provider-row-col-name">
                       <strong>{provider.label}</strong>
                     </div>
                     <div className="provider-row-col">

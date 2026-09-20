@@ -86,6 +86,13 @@ section {
   text-align: center;
 }
 
+/* The name is the one column that reads better left-aligned — it's the
+ * identifying label for the row (like a list item's title), whereas type
+ * and status are short, symmetric badges that suit centering. */
+.provider-row-col-name {
+  text-align: left;
+}
+
 .provider-type {
   font-size: 11px;
   color: var(--color-parchment);
