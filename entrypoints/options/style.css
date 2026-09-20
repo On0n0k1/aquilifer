@@ -542,6 +542,78 @@ button:disabled {
   gap: 6px;
 }
 
+/* A stand-in for the real popup (Appearance tab) — this page can't open
+ * one to show at true size, so this is built from the popup's own
+ * palette instead, its width sized directly off the width slider's live
+ * value so moving it is visible immediately. Its own height is never set
+ * — like the real popup, it's driven purely by its (fake) content. The
+ * fake providers deliberately use one of each provider type so the
+ * preview shows what a populated, mixed-provider list actually looks
+ * like, not just an empty shell. overflow-x on the wrapper, not the
+ * preview itself, so a width past this page's own max-width scrolls
+ * instead of breaking the page layout. */
+.popup-size-preview-wrapper {
+  overflow-x: auto;
+  margin: 4px 0;
+}
+
+.popup-size-preview {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--color-gold);
+  border-radius: 8px;
+  background: var(--color-bg);
+  color: var(--color-parchment);
+}
+
+.popup-size-preview-title {
+  color: var(--color-gold);
+  font-size: var(--font-size-lg);
+}
+
+.popup-size-preview-providers {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.popup-size-preview-providers li {
+  padding: 8px 0;
+  border-top: 1px solid rgba(201, 162, 39, 0.15);
+}
+
+.popup-size-preview-provider-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--font-size-md);
+}
+
+.popup-size-preview-provider-row strong {
+  color: var(--color-gold);
+}
+
+.popup-size-preview-provider-type {
+  font-size: var(--font-size-xs);
+  color: var(--color-parchment);
+  opacity: 0.6;
+  text-transform: uppercase;
+}
+
+.popup-size-preview-provider-model {
+  display: block;
+  font-size: var(--font-size-xs);
+  color: var(--color-parchment);
+  opacity: 0.6;
+}
+
 .checkbox-option input {
   width: auto;
   padding: 0;

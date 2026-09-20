@@ -56,10 +56,55 @@ function AppearanceSection() {
           />
         </label>
 
+        {/* Not the real popup — this page can't open one, so it's a
+         * stand-in built from the same palette/type scale to show
+         * relative width as the slider moves. Its height is never set
+         * directly, same as the real popup: it grows and shrinks with
+         * its own (fake) content instead of being a separate preference.
+         * The real popup's on-screen size still ultimately depends on
+         * the browser/OS, same unverifiable-by-automation caveat as
+         * popupWidth always had. */}
+        <div>
+          <span>Preview</span>
+          <div className="popup-size-preview-wrapper">
+            <div
+              className="popup-size-preview"
+              aria-hidden="true"
+              style={{ width: prefs.popupWidth }}
+            >
+              <strong className="popup-size-preview-title">Aquilifer</strong>
+              <ul className="popup-size-preview-providers">
+                <li>
+                  <div className="popup-size-preview-provider-row">
+                    <strong>Personal Claude</strong>
+                    <span className="popup-size-preview-provider-type">
+                      anthropic
+                    </span>
+                  </div>
+                  <span className="popup-size-preview-provider-model">
+                    claude-opus-5
+                  </span>
+                </li>
+                <li>
+                  <div className="popup-size-preview-provider-row">
+                    <strong>Work OpenAI</strong>
+                    <span className="popup-size-preview-provider-type">
+                      openai-compatible
+                    </span>
+                  </div>
+                  <span className="popup-size-preview-provider-model">
+                    gpt-5
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
         <label title="Only the toolbar popup's own width — not the connection-approval, rate-limit, or vault-unlock popups, which are separate, transient windows.">
-          Popup width (pixels)
+          Popup width ({prefs.popupWidth}px)
           <input
-            type="number"
+            type="range"
             min={300}
             max={900}
             step={10}

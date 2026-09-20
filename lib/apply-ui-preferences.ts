@@ -7,7 +7,9 @@
 //
 // --popup-width only affects popup/style.css's body width; every other
 // stylesheet simply never reads that variable, so setting it everywhere
-// is harmless rather than worth special-casing per entrypoint.
+// is harmless rather than worth special-casing per entrypoint. Height is
+// deliberately not a preference here — the popup's height is always
+// content-driven, the same as any other ordinary page.
 
 import { getUiPreferences } from './ui-preferences';
 
