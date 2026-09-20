@@ -130,16 +130,8 @@
   gap: 8px;
 }
 
-.provider-row-actions {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
 .provider-model-row button,
-.provider-row-actions button {
+.provider-row-col button {
   font-size: 11px;
   padding: 4px 8px;
 }

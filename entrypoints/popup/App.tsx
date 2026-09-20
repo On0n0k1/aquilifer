@@ -263,8 +263,15 @@ function App() {
                       {provider.id === siteProviderId && (
                         <span className="provider-current-site">this site</span>
                       )}
-                      {provider.id === defaultProviderId && (
+                      {provider.id === defaultProviderId ? (
                         <span className="provider-default">default</span>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => handleSetDefault(provider.id)}
+                        >
+                          Set default
+                        </button>
                       )}
                       {activeProviderIds.has(provider.id) && (
                         <span
@@ -316,16 +323,6 @@ function App() {
                   </div>
                   {picker?.status === 'error' && (
                     <p className="model-picker-error">{picker.error}</p>
-                  )}
-                  {provider.id !== defaultProviderId && (
-                    <div className="provider-row-actions">
-                      <button
-                        type="button"
-                        onClick={() => handleSetDefault(provider.id)}
-                      >
-                        Set default
-                      </button>
-                    </div>
                   )}
                 </li>
               );
