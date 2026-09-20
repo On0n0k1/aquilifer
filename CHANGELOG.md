@@ -1,3 +1,18 @@
+# [1.4.0](https://github.com/On0n0k1/aquilifer/compare/v1.3.0...v1.4.0) (2026-09-20)
+
+
+### Bug Fixes
+
+* **background:** cool down repeated rate-limit block alerts ([1e2b4ce](https://github.com/On0n0k1/aquilifer/commit/1e2b4ce127f1136527d85d452eb2215032831dd4))
+* **popup:** match the Default tag and Set Default button's box size ([2f92425](https://github.com/On0n0k1/aquilifer/commit/2f924251041399d53764fdb785a9264d4a556cd4))
+* **popup:** pin the status row's height instead of resizing the badges ([54633c5](https://github.com/On0n0k1/aquilifer/commit/54633c5e730525ffd8ffdc2ddc694ced95564dd6))
+* **popup:** reliably close the picker on re-picking the same model ([15f75c2](https://github.com/On0n0k1/aquilifer/commit/15f75c2b1f1cb8ecb5df18c31adf510afa72795c))
+
+
+### Features
+
+* **options:** make the block-alert cooldown configurable ([89b5417](https://github.com/On0n0k1/aquilifer/commit/89b541722d5d0afa52078196cd08ef1d085277ef))
+
 # [1.3.0](https://github.com/On0n0k1/aquilifer/compare/v1.2.0...v1.3.0) (2026-09-20)
 
 
