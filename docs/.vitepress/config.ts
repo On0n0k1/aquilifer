@@ -223,6 +223,29 @@ export default defineConfig({
                 },
               ],
             },
+            {
+              text: 'aquilifer-types',
+              link: '/docs/aquilifer-types',
+              collapsed: true,
+              items: [
+                {
+                  text: 'Not published yet',
+                  link: '/docs/aquilifer-types#not-published-yet',
+                },
+                {
+                  text: 'What it will ship',
+                  link: '/docs/aquilifer-types#what-it-will-ship',
+                },
+                {
+                  text: "What it won't ship yet",
+                  link: '/docs/aquilifer-types#what-it-won-t-ship-yet',
+                },
+                {
+                  text: 'Package name status',
+                  link: '/docs/aquilifer-types#package-name-status',
+                },
+              ],
+            },
           ],
         },
         {
