@@ -113,13 +113,21 @@
   text-align: center;
 }
 
-/* Small, muted, centered — was entirely unstyled before, which read as an
- * oversight sitting directly under .provider-row-main's own styling. */
 .provider-detail {
-  text-align: center;
   font-size: 11px;
   color: var(--color-parchment);
   opacity: 0.6;
+}
+
+/* Model name and its Change control on the same row, on opposite ends —
+ * makes the pairing obvious (the button is right next to what it
+ * changes) instead of the model text and the button sitting on separate
+ * rows with a "Set default" button in between them. */
+.provider-model-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
 }
 
 .provider-row-actions {
@@ -130,12 +138,13 @@
   gap: 8px;
 }
 
+.provider-model-row button,
 .provider-row-actions button {
   font-size: 11px;
   padding: 4px 8px;
 }
 
-.provider-row-actions select {
+.provider-model-row select {
   font-size: 11px;
   padding: 4px 6px;
   border-radius: 4px;

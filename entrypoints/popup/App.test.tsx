@@ -177,7 +177,7 @@ describe('providers configured', () => {
 
     render(<App />);
     await userEvent.click(
-      await screen.findByRole('button', { name: 'Change model' }),
+      await screen.findByRole('button', { name: 'Change' }),
     );
 
     expect(await screen.findByRole('combobox')).toBeInTheDocument();
@@ -186,9 +186,7 @@ describe('providers configured', () => {
     );
 
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: 'Change model' }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change' })).toBeInTheDocument();
 
     vi.unstubAllGlobals();
   });

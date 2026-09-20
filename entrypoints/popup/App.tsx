@@ -278,16 +278,8 @@ function App() {
                       )}
                     </div>
                   </div>
-                  <div className="provider-detail">{provider.model}</div>
-                  <div className="provider-row-actions">
-                    {provider.id !== defaultProviderId && (
-                      <button
-                        type="button"
-                        onClick={() => handleSetDefault(provider.id)}
-                      >
-                        Set default
-                      </button>
-                    )}
+                  <div className="provider-model-row">
+                    <span className="provider-detail">{provider.model}</span>
                     {picker?.status === 'ready' ? (
                       <>
                         <select
@@ -318,14 +310,22 @@ function App() {
                         onClick={() => openModelPicker(provider)}
                         disabled={picker?.status === 'loading'}
                       >
-                        {picker?.status === 'loading'
-                          ? 'Loading…'
-                          : 'Change model'}
+                        {picker?.status === 'loading' ? 'Loading…' : 'Change'}
                       </button>
                     )}
                   </div>
                   {picker?.status === 'error' && (
                     <p className="model-picker-error">{picker.error}</p>
+                  )}
+                  {provider.id !== defaultProviderId && (
+                    <div className="provider-row-actions">
+                      <button
+                        type="button"
+                        onClick={() => handleSetDefault(provider.id)}
+                      >
+                        Set default
+                      </button>
+                    </div>
                   )}
                 </li>
               );
