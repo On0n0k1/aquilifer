@@ -18,12 +18,16 @@ If you're the only person who ever uses your browser, the vault's main benefit d
 
 From the **Security** tab in settings:
 
+![The Security tab before the vault is set up, with password and confirm password fields and an Enable vault button](/screenshots/vault-setup.png)
+
 1. Choose a password (at least 8 characters) and confirm it.
 2. Click **Enable vault**. Every API key you've already saved gets re-encrypted under it immediately; you don't need to re-add your providers.
 
 From then on, adding a new provider requires the vault to be unlocked (the settings page will tell you if it's locked).
 
 ## Locking and unlocking
+
+![The Security tab once the vault is unlocked, showing Lock now and Disable vault buttons](/screenshots/vault-unlocked.png)
 
 - **Lock now**, in the Security tab, locks it immediately, useful right after using a shared computer.
 - It also locks automatically whenever the browser fully closes.
