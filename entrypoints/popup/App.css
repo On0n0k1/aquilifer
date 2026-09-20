@@ -105,6 +105,12 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  /* The status column holds either the "Default" tag or the "Set
+   * Default" button — a real button (border + larger padding) is taller
+   * than the plain tag, so pin the row to fit the taller of the two
+   * instead of chasing pixel-perfect parity between them; switching
+   * which one renders then never reflows the row. */
+  min-height: 25px;
 }
 
 .provider-row-col {
@@ -163,37 +169,19 @@
   text-transform: uppercase;
 }
 
-/* Default's tag and Set Default's button occupy the same slot in the
- * status column, one replacing the other as a provider becomes/stops
- * being the default — matching box-sizing/border/padding/margin here
- * keeps that swap from shifting the row's height. */
-.provider-current-site,
-.provider-default,
-.set-default-button {
-  box-sizing: border-box;
-  font-size: 11px;
-  font-weight: 600;
-  padding: 2px 6px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  margin: 0;
-}
-
 .provider-current-site,
 .provider-default {
+  font-size: 11px;
+  font-weight: 600;
   color: var(--color-bg);
   background: var(--color-gold);
+  padding: 2px 6px;
+  border-radius: 4px;
 }
 
 .set-default-button {
-  color: var(--color-gold);
-  background-color: rgba(201, 162, 39, 0.08);
-  border-color: var(--color-gold);
-  cursor: pointer;
-}
-
-.set-default-button:hover {
-  background-color: rgba(201, 162, 39, 0.18);
+  font-size: 11px;
+  padding: 4px 8px;
 }
 
 .model-picker-cancel {
