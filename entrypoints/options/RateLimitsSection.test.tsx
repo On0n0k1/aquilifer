@@ -20,3 +20,20 @@ describe('Block-notification checkboxes', () => {
     );
   });
 });
+
+describe('Block-alert cooldown', () => {
+  it('explains itself via a hover tooltip and defaults to 15 seconds', () => {
+    render(<RateLimitsSection />);
+
+    const field = screen.getByText('Minimum seconds between block alerts');
+    expect(field).toHaveAttribute(
+      'title',
+      expect.stringContaining("won't re-alert you"),
+    );
+    expect(
+      screen.getByRole('spinbutton', {
+        name: 'Minimum seconds between block alerts',
+      }),
+    ).toHaveValue(15);
+  });
+});

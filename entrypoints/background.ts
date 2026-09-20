@@ -105,8 +105,9 @@ export default defineBackground(() => {
   // not just an annoyance but a way for a site to spam actual windows
   // open. In-memory only: losing it on a service-worker restart just
   // means the next block after a restart always alerts, which is fine.
+  // The cooldown length itself is user-configurable (Options — Rate
+  // limiting), read fresh below rather than a fixed constant.
   const lastBlockedAlertAt = new Map<string, number>();
-  const BLOCKED_ALERT_COOLDOWN_MS = 15_000;
 
   function trackActiveRequest<T>(
     providerId: string,
@@ -515,11 +516,12 @@ export default defineBackground(() => {
   }
 
   async function handleBlocked(origin: string) {
-    const lastAlertedAt = lastBlockedAlertAt.get(origin) ?? 0;
-    if (Date.now() - lastAlertedAt < BLOCKED_ALERT_COOLDOWN_MS) return;
-    lastBlockedAlertAt.set(origin, Date.now());
-
     const settings = await getRateLimitSettings();
+
+    const lastAlertedAt = lastBlockedAlertAt.get(origin) ?? 0;
+    const cooldownMs = settings.blockAlertCooldownSeconds * 1000;
+    if (Date.now() - lastAlertedAt < cooldownMs) return;
+    lastBlockedAlertAt.set(origin, Date.now());
 
     if (settings.notifyOnBlock) {
       browser.notifications.create({

@@ -40,6 +40,13 @@ export interface RateLimitSettings {
   notifyOnBlock: boolean;
   /** Open a popup window when a request gets blocked. */
   showPopupOnBlock: boolean;
+  /** Minimum time between block alerts (notification/popup) for the same
+   *  origin — a site retrying immediately after being blocked hits this
+   *  same path on every call, so without a cooldown that's one OS
+   *  notification (and one browser popup window) per call. Doesn't affect
+   *  the block itself or its History log entry, only how often the user
+   *  gets alerted about it. */
+  blockAlertCooldownSeconds: number;
 }
 
 export const DEFAULT_RATE_LIMIT_SETTINGS: RateLimitSettings = {
@@ -52,6 +59,7 @@ export const DEFAULT_RATE_LIMIT_SETTINGS: RateLimitSettings = {
   sizeThresholdChars: 8000,
   notifyOnBlock: true,
   showPopupOnBlock: false,
+  blockAlertCooldownSeconds: 15,
 };
 
 const RATE_LIMIT_KEY = 'rateLimitSettings';

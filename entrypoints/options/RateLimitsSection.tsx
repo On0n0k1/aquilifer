@@ -111,6 +111,21 @@ function RateLimitsSection() {
           />
         </label>
 
+        <label title="Minimum time between block alerts (notification/popup) for the same site — a site retrying right after being blocked won't re-alert you on every single retry. Doesn't affect the block itself, only how often you're notified about it.">
+          Minimum seconds between block alerts
+          <input
+            type="number"
+            min={0}
+            value={rateLimits.blockAlertCooldownSeconds}
+            onChange={(event) =>
+              setRateLimits({
+                ...rateLimits,
+                blockAlertCooldownSeconds: Number(event.target.value),
+              })
+            }
+          />
+        </label>
+
         <label
           className="checkbox-option"
           title="Show a browser notification whenever a request gets blocked by your rate limit."
