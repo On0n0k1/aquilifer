@@ -12,7 +12,7 @@ Every project has tradeoffs. This page exists so they're written down plainly in
 ## What Aquilifer doesn't do
 
 - **A site can never use two providers at once.** Exactly one provider is bound per site at a time; a provider-specific interface needing a different type triggers a switch (replacing the binding), never a second grant.
-- **The generic chat interface is text-in, text-out only**: no tool use, images, or structured output. A site needing those has to use a [provider-specific interface](/docs/api#provider-specific-interfaces) and accept being tied to that provider's native request shape.
+- **The generic chat interface is text-in, text-out only**: no tool use, images, or structured output. A site needing those has to use the [Anthropic Claude](/docs/anthropic-api) or [OpenAI-compatible](/docs/openai-compatible-api) interface instead, and accept being tied to that provider's native request shape.
 - **No password/settings sync across devices.** Everything Aquilifer stores is local to one browser profile on one machine; connecting a provider on your laptop doesn't carry over to your desktop.
 
 ## Platform & maturity

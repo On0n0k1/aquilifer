@@ -204,12 +204,8 @@ export default defineConfig({
                 },
                 { text: 'Connecting', link: '/docs/api#connecting' },
                 {
-                  text: 'Asking for a completion',
-                  link: '/docs/api#asking-for-a-completion',
-                },
-                {
-                  text: 'Provider-specific interfaces',
-                  link: '/docs/api#provider-specific-interfaces',
+                  text: 'Which interface to use',
+                  link: '/docs/api#which-interface-to-use',
                 },
                 {
                   text: 'Other things you can check',
@@ -220,6 +216,59 @@ export default defineConfig({
                 {
                   text: 'Using Aquilifer as a fallback',
                   link: '/docs/api#using-aquilifer-as-a-fallback',
+                },
+              ],
+            },
+            {
+              text: 'Generic API',
+              link: '/docs/generic-api',
+              collapsed: true,
+              items: [
+                {
+                  text: 'Asking for a completion',
+                  link: '/docs/generic-api#asking-for-a-completion',
+                },
+                {
+                  text: 'Streaming',
+                  link: '/docs/generic-api#streaming',
+                },
+              ],
+            },
+            {
+              text: 'Anthropic Claude',
+              link: '/docs/anthropic-api',
+              collapsed: true,
+              items: [
+                {
+                  text: 'Sending a message',
+                  link: '/docs/anthropic-api#sending-a-message',
+                },
+                {
+                  text: 'Streaming',
+                  link: '/docs/anthropic-api#streaming',
+                },
+                {
+                  text: "If the user isn't bound to an Anthropic provider",
+                  link: '/docs/anthropic-api#if-the-user-isn-t-bound-to-an-anthropic-provider',
+                },
+              ],
+            },
+            {
+              text: 'OpenAI-compatible',
+              link: '/docs/openai-compatible-api',
+              collapsed: true,
+              items: [
+                {
+                  text: 'Sending a message',
+                  link: '/docs/openai-compatible-api#sending-a-message',
+                },
+                {
+                  text: 'Streaming',
+                  link: '/docs/openai-compatible-api#streaming',
+                },
+                {
+                  text: "If the user isn't bound to an OpenAI-compatible provider",
+                  link: '/docs/openai-compatible-api#if-the-user-isn-t-bound-to-an-openai-compatible-provider',
                 },
               ],
             },

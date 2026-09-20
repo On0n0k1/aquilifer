@@ -1,6 +1,6 @@
 # The page-facing API
 
-This page is for developers integrating Aquilifer into a website's own frontend code. Everything here runs in the browser, in a page that a user has approved: there is no backend involved, and there's no npm package to install yet (see [aquilifer-types](/docs/aquilifer-types) for the plan). Until then, this page is the reference for hand-writing your own types against the shapes below.
+This page is for developers integrating Aquilifer into a website's own frontend code. Everything here runs in the browser, in a page that a user has approved: there is no backend involved, and there's no npm package to install yet (see [aquilifer-types](/docs/aquilifer-types) for the plan). Until then, this page and its sub-pages are the reference for hand-writing your own types against the shapes they document.
 
 ## Before you start
 
@@ -22,53 +22,11 @@ await window.aquilifer.request({ method: 'connect' });
 
 The first call for a given site opens the approval popup described in [Connecting a site](/docs/connecting) and resolves once the user answers it. If they've already approved your site, it resolves immediately without a prompt.
 
-## Asking for a completion
+## Which interface to use
 
-The generic interface works the same no matter which provider the user has connected: you never choose or see which one answers:
-
-```js
-const { message } = await window.aquilifer.request({
-  method: 'chat',
-  params: {
-    messages: [{ role: 'user', content: 'Hello!' }],
-  },
-});
-```
-
-Every call is stateless: send the full conversation you want answered each time (see [History](/docs/history)).
-
-### Streaming
-
-```js
-for await (const { delta } of window.aquilifer.stream({
-  messages: [{ role: 'user', content: 'Write a haiku.' }],
-})) {
-  process(delta);
-}
-```
-
-The loop ends normally on completion, or throws (catchable with `try`/`catch`) on failure, with no special "done" or "error" values to check for.
-
-## Provider-specific interfaces
-
-If you need a specific provider's native request shape (tool use, images, structured output, things the generic interface above doesn't cover), Aquilifer exposes each provider's real API shape directly, minus the credential:
-
-```js
-const response = await window.aquilifer.anthropicMessages({
-  max_tokens: 1024,
-  messages: [{ role: 'user', content: 'Hello!' }],
-});
-```
-
-```js
-const response = await window.aquilifer.openaiChatCompletions({
-  messages: [{ role: 'user', content: 'Hello!' }],
-});
-```
-
-Both bodies match the real Anthropic Messages API / OpenAI chat-completions request shape (minus `model`, which Aquilifer always sets to whatever the user's bound provider actually is) and return the real response shape. Streaming variants exist too: `anthropicMessagesStream(body)` and `openaiChatCompletionsStream(body)`, yielding the provider's own raw streaming events, not a simplified shape.
-
-**Calling one of these when the user's bound provider doesn't match its type doesn't just fail**: it prompts the user to switch (see [Connecting a site](/docs/connecting)). Design for that as a normal, expected outcome, not an error path to work around.
+- **[Generic API](/docs/generic-api)**: provider-agnostic `chat`/`stream`. Start here; it's what most integrations need, and it works no matter which provider the user has connected.
+- **[Anthropic Claude](/docs/anthropic-api)**: Claude's own native request shape, for tool use, images, or structured output the generic interface doesn't cover.
+- **[OpenAI-compatible](/docs/openai-compatible-api)**: the native OpenAI chat-completions shape, against OpenAI itself or a self-hosted/local backend.
 
 ## Other things you can check
 
@@ -134,6 +92,6 @@ If your site already has its own LLM integration and only wants to use Aquilifer
 
 - You can never obtain the user's credentials this way, same as any other integration.
 - You can never exceed the *user's own* configured rate limits: a fallback hammering retries after `rate_limited` defeats the purpose of the limit existing.
-- You can only use whichever provider the user has already bound; calling a provider-specific interface for a different type triggers the switch flow above, not a silent override.
+- You can only use whichever provider the user has already bound; calling a provider-specific interface for a different type triggers a switch prompt (see [Anthropic Claude](/docs/anthropic-api) or [OpenAI-compatible](/docs/openai-compatible-api)), not a silent override.
 
 Use `isConnected()` to check before falling back, so you never risk surprising the user with an approval popup during what looks like an unrelated action.

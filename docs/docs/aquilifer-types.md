@@ -4,11 +4,11 @@ A planned companion npm package: TypeScript types for `window.aquilifer`, so a w
 
 ## Not published yet
 
-`aquilifer-types` is a reserved name, not a published package. Work on it hasn't started, deliberately deferred until [the page-facing API](/docs/api) is considered stable, since a breaking change there would mean a breaking change here too. Until it exists, hand-write your own types against [the page-facing API reference](/docs/api#full-public-api-reference), or copy the shapes directly.
+`aquilifer-types` is a reserved name, not a published package. Work on it hasn't started, deliberately deferred until [the page-facing API](/docs/api) is considered stable, since a breaking change there would mean a breaking change here too. Until it exists, hand-write your own types against [the page-facing API](/docs/api) and its [generic](/docs/generic-api), [Anthropic Claude](/docs/anthropic-api), and [OpenAI-compatible](/docs/openai-compatible-api) sub-pages, or copy the shapes directly.
 
 ## What it will ship
 
-- The `window.aquilifer` type declaration itself, plus every type it depends on (listed in [the page-facing API's full reference](/docs/api#full-public-api-reference)).
+- The `window.aquilifer` type declaration itself, plus every type it depends on (across [the page-facing API](/docs/api) and its [generic](/docs/generic-api), [Anthropic Claude](/docs/anthropic-api), and [OpenAI-compatible](/docs/openai-compatible-api) sub-pages).
 - The provider-specific request/response/stream types, derived from the official `@anthropic-ai/sdk` and `openai` packages so they track each provider's own API shape rather than a hand-maintained copy.
 - Two small runtime helpers: `getAquilifer()` (returns `window.aquilifer` if present, `undefined` otherwise) and `isAquiliferAvailable()` (the same check as a boolean). Small enough that there's exactly one sane behavior for each, nothing to get wrong in a first release.
 - Zero runtime cost for the types themselves: everything is erased at compile time, the same way Aquilifer's own extension code only ever `import type`s from the official provider SDKs.
