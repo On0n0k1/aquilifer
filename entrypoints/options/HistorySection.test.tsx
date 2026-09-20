@@ -108,15 +108,13 @@ describe('Card theme toggle', () => {
 
     await userEvent.click(light);
     expect(light).toHaveClass('active');
-    expect(document.querySelector('.history-list')).toHaveClass(
-      'light-cards',
-    );
+    expect(document.querySelector('.history-list')).toHaveClass('light-cards');
     unmount();
 
     render(<HistorySection />);
-    expect(
-      await screen.findByRole('button', { name: 'Light' }),
-    ).toHaveClass('active');
+    expect(await screen.findByRole('button', { name: 'Light' })).toHaveClass(
+      'active',
+    );
   });
 });
 

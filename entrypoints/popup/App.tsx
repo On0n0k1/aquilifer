@@ -327,7 +327,7 @@ function App() {
           </ul>
 
           <button type="button" className="options-link" onClick={openOptions}>
-            Manage providers
+            Settings
           </button>
         </>
       )}
