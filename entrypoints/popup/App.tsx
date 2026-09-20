@@ -287,9 +287,8 @@ function App() {
                     </div>
                   </div>
                   <div className="provider-model-row">
-                    <span className="provider-detail">{provider.model}</span>
-                    {picker?.status === 'ready' ? (
-                      <>
+                    <div className="provider-model-slot">
+                      {picker?.status === 'ready' ? (
                         <select
                           value={provider.model}
                           onChange={(event) =>
@@ -302,16 +301,22 @@ function App() {
                             </option>
                           ))}
                         </select>
-                        <button
-                          type="button"
-                          className="model-picker-cancel"
-                          aria-label="Cancel changing model"
-                          title="Cancel"
-                          onClick={() => closeModelPicker(provider.id)}
-                        >
-                          ✕
-                        </button>
-                      </>
+                      ) : (
+                        <span className="provider-detail">
+                          {provider.model}
+                        </span>
+                      )}
+                    </div>
+                    {picker?.status === 'ready' ? (
+                      <button
+                        type="button"
+                        className="model-picker-cancel"
+                        aria-label="Cancel changing model"
+                        title="Cancel"
+                        onClick={() => closeModelPicker(provider.id)}
+                      >
+                        ✕
+                      </button>
                     ) : (
                       <button
                         type="button"
