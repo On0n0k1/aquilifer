@@ -12,6 +12,10 @@ Aquilifer's generic chat interface and each provider-specific interface keep the
 
 The generic chat tab renders prompts and responses as real markdown — headings, code blocks, lists, and the like — instead of showing the raw `##`/`` ``` `` syntax as plain text. The provider-specific tabs (Anthropic Messages, OpenAI Chat Completions) show a compact JSON summary of the request/response instead, so those stay plain text.
 
+## Dark or light entry cards
+
+History entries render on their own card, separate from the page's base background — a **Dark**/**Light** toggle next to the History heading switches which. Dark (the default) follows the same colors as the rest of the extension; Light uses a parchment-style card instead. Your choice is remembered.
+
 ## What it doesn't do
 
 - History is **not sent anywhere** — it's stored locally in the browser, like everything else Aquilifer keeps.

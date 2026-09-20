@@ -160,7 +160,58 @@ section {
   margin-bottom: 8px;
 }
 
+.card-theme-toggle {
+  /* Overrides the global fieldset rule below (column direction, gold
+   * border/padding meant for the rate-limit fieldsets) — used here for
+   * its semantics (a11y/lint), not that default look. */
+  display: flex;
+  flex-direction: row;
+  gap: 4px;
+  border: none;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}
+
+.card-theme-button {
+  padding: 4px 10px;
+  font-size: 11px;
+  border-radius: 4px;
+  border: 1px solid var(--color-gold);
+  cursor: pointer;
+  color: var(--color-gold);
+  background-color: rgba(201, 162, 39, 0.08);
+}
+
+.card-theme-button:hover {
+  background-color: rgba(201, 162, 39, 0.18);
+}
+
+.card-theme-button.active {
+  background: var(--color-gold);
+  color: var(--color-bg);
+  font-weight: 600;
+}
+
 .history-list {
+  /* History entries get a raised card rather than staying flush with the
+   * page base (SPEC §15/§7) — dense, read-at-length text (prompts,
+   * markdown-rendered results) wants its own reading surface. Dark is the
+   * default and follows the app's own theme colors; .light-cards (the
+   * Dark/Light toggle above) swaps these to the original parchment-card
+   * look. Every rule below reads from these custom properties instead of
+   * hardcoding either palette, so the two variants never drift apart. */
+  --card-bg: var(--color-bg-raised);
+  --card-text: var(--color-parchment);
+  --card-divider: rgba(242, 237, 228, 0.2);
+  --card-heading: var(--color-gold);
+  --card-link: var(--color-gold);
+  --card-quote-border: rgba(242, 237, 228, 0.25);
+  --card-code-bg: rgba(242, 237, 228, 0.12);
+  --card-pre-bg: var(--color-bg);
+  --card-pre-border: rgba(242, 237, 228, 0.15);
+  --card-table-border: rgba(242, 237, 228, 0.2);
+
   list-style: none;
   padding: 0;
   margin: 0;
@@ -171,19 +222,31 @@ section {
   overflow-y: auto;
 }
 
-/* History entries get a raised parchment card rather than staying flush
- * with the dark base (SPEC §15's "parchment white... card backgrounds") —
- * this is the one part of the page with enough dense, read-at-length text
- * (prompts/results) to warrant a lighter reading surface. Child combinator,
- * not descendant — a markdown-rendered response can contain its own <li>
- * elements (bullet/numbered lists), which are also descendants of
- * .history-list and would otherwise pick up this same card styling. */
+.history-list.light-cards {
+  --card-bg: var(--color-parchment);
+  --card-text: var(--color-bg);
+  --card-divider: rgba(20, 38, 28, 0.2);
+  --card-heading: var(--color-bg);
+  /* Gold reads poorly on light parchment (both light, low contrast) — a
+   * darkened gold-brown instead, only needed for this variant. */
+  --card-link: #7a5f14;
+  --card-quote-border: rgba(20, 38, 28, 0.25);
+  --card-code-bg: rgba(20, 38, 28, 0.08);
+  --card-pre-bg: #e8e2d5;
+  --card-pre-border: rgba(20, 38, 28, 0.15);
+  --card-table-border: rgba(20, 38, 28, 0.2);
+}
+
+/* Child combinator, not descendant — a markdown-rendered response can
+ * contain its own <li> elements (bullet/numbered lists), which are also
+ * descendants of .history-list and would otherwise pick up this same
+ * card styling. */
 .history-list > li {
   padding: 10px;
   border: 1px solid rgba(201, 162, 39, 0.3);
   border-radius: 6px;
-  background: var(--color-parchment);
-  color: var(--color-bg);
+  background: var(--card-bg);
+  color: var(--card-text);
 }
 
 .history-meta {
@@ -191,13 +254,13 @@ section {
   gap: 8px;
   align-items: baseline;
   font-size: 11px;
-  color: var(--color-bg);
+  color: var(--card-text);
   opacity: 0.65;
   margin-bottom: 6px;
 }
 
 .history-meta strong {
-  color: var(--color-bg);
+  color: var(--card-text);
   opacity: 1;
   font-size: 12px;
 }
@@ -222,11 +285,11 @@ section {
   word-break: break-word;
   margin-top: 6px;
   padding-top: 6px;
-  border-top: 1px solid rgba(20, 38, 28, 0.2);
+  border-top: 1px solid var(--card-divider);
 }
 
 .history-result {
-  color: var(--color-bg);
+  color: var(--card-text);
 }
 
 .history-error {
@@ -236,9 +299,8 @@ section {
 
 /* Rendered markdown (SPEC §7) — real LLM output, so it needs its own
  * element styling rather than just inheriting the plain-text rules above.
- * Colors here are tuned for sitting on the parchment card specifically:
- * gold reads poorly on parchment (both light, low contrast), so links use
- * a darkened gold-brown instead of the palette's usual gold accent. */
+ * Every color reads from .history-list's --card-* custom properties, so
+ * it automatically follows the Dark/Light card toggle above. */
 .markdown-content > :first-child {
   margin-top: 0;
 }
@@ -252,11 +314,7 @@ section {
 }
 
 .markdown-content :where(h1, h2, h3, h4, h5, h6) {
-  /* Explicit, not inherited: the app's global h1/h2 rules (page/section
-   * titles) are gold, which measures well under WCAG's 4.5:1 minimum
-   * against this parchment background (~2:1) — fine on the dark base
-   * they're designed for, not here. */
-  color: var(--color-bg);
+  color: var(--card-heading);
   font-size: 13px;
   font-weight: 700;
   margin: 10px 0 4px;
@@ -273,20 +331,20 @@ section {
 }
 
 .markdown-content a {
-  color: #7a5f14;
+  color: var(--card-link);
 }
 
 .markdown-content blockquote {
   margin: 6px 0;
   padding-left: 10px;
-  border-left: 3px solid rgba(20, 38, 28, 0.25);
+  border-left: 3px solid var(--card-quote-border);
   opacity: 0.85;
 }
 
 .markdown-content code {
   font-family: ui-monospace, "SF Mono", Consolas, monospace;
   font-size: 11px;
-  background: rgba(20, 38, 28, 0.08);
+  background: var(--card-code-bg);
   padding: 1px 4px;
   border-radius: 3px;
 }
@@ -294,8 +352,8 @@ section {
 .markdown-content pre {
   margin: 8px 0;
   padding: 8px 10px;
-  background: #e8e2d5;
-  border: 1px solid rgba(20, 38, 28, 0.15);
+  background: var(--card-pre-bg);
+  border: 1px solid var(--card-pre-border);
   border-radius: 6px;
   overflow-x: auto;
 }
@@ -315,7 +373,7 @@ section {
 
 .markdown-content th,
 .markdown-content td {
-  border: 1px solid rgba(20, 38, 28, 0.2);
+  border: 1px solid var(--card-table-border);
   padding: 4px 8px;
   text-align: left;
 }

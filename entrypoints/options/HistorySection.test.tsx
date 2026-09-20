@@ -81,6 +81,45 @@ describe('Generic chat history', () => {
   });
 });
 
+describe('Card theme toggle', () => {
+  it('defaults to dark and persists the choice across remounts', async () => {
+    await browser.storage.local.set({
+      history: [
+        {
+          id: 'h1',
+          origin: 'https://example.com',
+          timestamp: Date.now(),
+          providerId: 'p1',
+          providerLabel: 'My Anthropic',
+          messages: [{ role: 'user', content: 'hi' }],
+          outcome: { ok: true, message: 'hello back' },
+        },
+      ],
+    });
+
+    const { unmount } = render(<HistorySection />);
+    const dark = await screen.findByRole('button', { name: 'Dark' });
+    const light = screen.getByRole('button', { name: 'Light' });
+    expect(dark).toHaveClass('active');
+    expect(light).not.toHaveClass('active');
+    expect(document.querySelector('.history-list')).not.toHaveClass(
+      'light-cards',
+    );
+
+    await userEvent.click(light);
+    expect(light).toHaveClass('active');
+    expect(document.querySelector('.history-list')).toHaveClass(
+      'light-cards',
+    );
+    unmount();
+
+    render(<HistorySection />);
+    expect(
+      await screen.findByRole('button', { name: 'Light' }),
+    ).toHaveClass('active');
+  });
+});
+
 describe('Anthropic Messages history', () => {
   it('keeps the JSON summary as plain text, not markdown', async () => {
     await browser.storage.local.set({

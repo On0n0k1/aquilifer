@@ -8,6 +8,11 @@ import {
   listHistory as listGenericHistory,
 } from '../../lib/history/generic';
 import * as openaiChatCompletionsHistory from '../../lib/history/openai-chat-completions';
+import {
+  getHistoryCardTheme,
+  type HistoryCardTheme,
+  setHistoryCardTheme,
+} from '../../lib/history-display-prefs';
 
 const WARNING_LABELS: Record<string, string> = {
   large_request: 'large request',
@@ -48,7 +53,7 @@ function MarkdownMessage({ content }: { content: string }) {
   );
 }
 
-function GenericHistoryList() {
+function GenericHistoryList({ cardTheme }: { cardTheme: HistoryCardTheme }) {
   const [history, setHistory] = useState<HistoryEntry[]>([]);
 
   useEffect(() => {
@@ -70,7 +75,11 @@ function GenericHistoryList() {
         )}
       </div>
       {history.length === 0 && <p>No requests yet.</p>}
-      <ul className="history-list">
+      <ul
+        className={
+          cardTheme === 'light' ? 'history-list light-cards' : 'history-list'
+        }
+      >
         {[...history]
           .sort((a, b) => b.timestamp - a.timestamp)
           .map((entry) => {
@@ -131,7 +140,13 @@ interface NativeHistoryModule {
   clearHistory: () => Promise<void>;
 }
 
-function NativeHistoryList({ module }: { module: NativeHistoryModule }) {
+function NativeHistoryList({
+  module,
+  cardTheme,
+}: {
+  module: NativeHistoryModule;
+  cardTheme: HistoryCardTheme;
+}) {
   const [history, setHistory] = useState<NativeHistoryEntry[]>([]);
 
   useEffect(() => {
@@ -153,7 +168,11 @@ function NativeHistoryList({ module }: { module: NativeHistoryModule }) {
         )}
       </div>
       {history.length === 0 && <p>No requests yet.</p>}
-      <ul className="history-list">
+      <ul
+        className={
+          cardTheme === 'light' ? 'history-list light-cards' : 'history-list'
+        }
+      >
         {[...history]
           .sort((a, b) => b.timestamp - a.timestamp)
           .map((entry) => (
@@ -183,10 +202,46 @@ function NativeHistoryList({ module }: { module: NativeHistoryModule }) {
 
 function HistorySection() {
   const [bucket, setBucket] = useState<HistoryBucket>('generic');
+  const [cardTheme, setCardTheme] = useState<HistoryCardTheme>('dark');
+
+  useEffect(() => {
+    getHistoryCardTheme().then(setCardTheme);
+  }, []);
+
+  async function handleSetCardTheme(theme: HistoryCardTheme) {
+    await setHistoryCardTheme(theme);
+    setCardTheme(theme);
+  }
 
   return (
     <section>
-      <h2>History</h2>
+      <div className="section-header">
+        <h2>History</h2>
+        <fieldset className="card-theme-toggle" aria-label="Card theme">
+          <button
+            type="button"
+            className={
+              cardTheme === 'dark'
+                ? 'card-theme-button active'
+                : 'card-theme-button'
+            }
+            onClick={() => handleSetCardTheme('dark')}
+          >
+            Dark
+          </button>
+          <button
+            type="button"
+            className={
+              cardTheme === 'light'
+                ? 'card-theme-button active'
+                : 'card-theme-button'
+            }
+            onClick={() => handleSetCardTheme('light')}
+          >
+            Light
+          </button>
+        </fieldset>
+      </div>
 
       <div className="tab-bar" role="tablist">
         {(Object.keys(BUCKET_LABELS) as HistoryBucket[]).map((key) => (
@@ -203,12 +258,18 @@ function HistorySection() {
         ))}
       </div>
 
-      {bucket === 'generic' && <GenericHistoryList />}
+      {bucket === 'generic' && <GenericHistoryList cardTheme={cardTheme} />}
       {bucket === 'anthropicMessages' && (
-        <NativeHistoryList module={anthropicMessagesHistory} />
+        <NativeHistoryList
+          module={anthropicMessagesHistory}
+          cardTheme={cardTheme}
+        />
       )}
       {bucket === 'openaiChatCompletions' && (
-        <NativeHistoryList module={openaiChatCompletionsHistory} />
+        <NativeHistoryList
+          module={openaiChatCompletionsHistory}
+          cardTheme={cardTheme}
+        />
       )}
     </section>
   );
