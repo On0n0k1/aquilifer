@@ -268,6 +268,7 @@ function App() {
                       ) : (
                         <button
                           type="button"
+                          className="set-default-button"
                           onClick={() => handleSetDefault(provider.id)}
                         >
                           Set Default
