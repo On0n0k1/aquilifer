@@ -264,13 +264,13 @@ function App() {
                         <span className="provider-current-site">this site</span>
                       )}
                       {provider.id === defaultProviderId ? (
-                        <span className="provider-default">default</span>
+                        <span className="provider-default">Default</span>
                       ) : (
                         <button
                           type="button"
                           onClick={() => handleSetDefault(provider.id)}
                         >
-                          Set default
+                          Set Default
                         </button>
                       )}
                       {activeProviderIds.has(provider.id) && (

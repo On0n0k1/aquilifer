@@ -154,14 +154,14 @@ describe('providers configured', () => {
     if (!otherRow) throw new Error('row not found');
 
     await userEvent.click(
-      within(otherRow).getByRole('button', { name: 'Set default' }),
+      within(otherRow).getByRole('button', { name: 'Set Default' }),
     );
 
-    expect(await within(otherRow).findByText('default')).toBeInTheDocument();
+    expect(await within(otherRow).findByText('Default')).toBeInTheDocument();
     const myRow = screen.getByText('My Anthropic').closest('li');
     if (!myRow) throw new Error('row not found');
     expect(
-      within(myRow).getByRole('button', { name: 'Set default' }),
+      within(myRow).getByRole('button', { name: 'Set Default' }),
     ).toBeInTheDocument();
   });
 
