@@ -12,10 +12,13 @@ export default defineConfig({
     // install-time permission warnings the way `tabs` would be.
     permissions: ['storage', 'notifications', 'activeTab'],
     // Anthropic's host is known ahead of time, so it's granted up front.
-    // Self-hosted/local provider URLs are arbitrary and unknown until the
-    // user adds one, so they go through optional_host_permissions +
-    // browser.permissions.request() at add-provider time instead (SPEC §3).
     host_permissions: ['https://api.anthropic.com/*'],
-    optional_host_permissions: ['<all_urls>'],
+    // No optional_host_permissions entry: the content scripts below already
+    // require <all_urls> (SPEC §4 — window.aquilifer is injected on every
+    // page by design), which Chrome folds into the extension's effective
+    // origin access on its own. Declaring <all_urls> again here as optional
+    // was flagged by Chrome as redundant with that required permission and
+    // silently dropped — removing it changes nothing at runtime, just the
+    // warning.
   },
 });
