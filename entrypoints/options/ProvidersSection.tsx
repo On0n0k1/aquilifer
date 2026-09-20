@@ -228,33 +228,44 @@ function ProvidersSection() {
             const isDefault = provider.id === defaultProviderId;
             return (
               <li key={provider.id}>
-                <div>
-                  <strong>{provider.label}</strong>
-                  <span className="provider-type">{provider.type}</span>
-                  {isDefault && (
-                    <span className="provider-default">default</span>
-                  )}
-                  <div className="provider-detail">
-                    {provider.type === 'openai-compatible'
-                      ? `${provider.baseUrl} (${provider.resolvedModel ?? provider.model})`
-                      : (provider.resolvedModel ?? provider.model)}
+                <div className="provider-row-top">
+                  <div className="provider-row-main">
+                    <div className="provider-row-col">
+                      <strong>{provider.label}</strong>
+                    </div>
+                    <div className="provider-row-col">
+                      <span className="provider-type">{provider.type}</span>
+                    </div>
+                    <div className="provider-row-col">
+                      {isDefault ? (
+                        <span className="provider-default">Default</span>
+                      ) : (
+                        <button
+                          type="button"
+                          className="set-default-button"
+                          onClick={() => handleSetDefault(provider.id)}
+                        >
+                          Set Default
+                        </button>
+                      )}
+                    </div>
                   </div>
-                </div>
-                <div className="provider-actions">
-                  {!isDefault && (
+                  <div className="provider-actions">
                     <button
                       type="button"
-                      onClick={() => handleSetDefault(provider.id)}
+                      className="provider-remove-button"
+                      aria-label="Remove provider"
+                      title="Remove"
+                      onClick={() => handleDelete(provider.id)}
                     >
-                      Set default
+                      ✕
                     </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(provider.id)}
-                  >
-                    Remove
-                  </button>
+                  </div>
+                </div>
+                <div className="provider-detail">
+                  {provider.type === 'openai-compatible'
+                    ? `${provider.baseUrl} (${provider.resolvedModel ?? provider.model})`
+                    : (provider.resolvedModel ?? provider.model)}
                 </div>
               </li>
             );

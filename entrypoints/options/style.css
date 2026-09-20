@@ -50,15 +50,43 @@ section {
 
 .provider-list li {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 6px;
   padding: 10px 0;
   border-bottom: 1px solid rgba(201, 162, 39, 0.15);
 }
 
+/* Same row-top/actions split as the popup's model row (App.css): the info
+ * side fills whatever width the fixed-size Remove button leaves behind,
+ * instead of hugging its own content and leaving dead space before it. */
+.provider-row-top {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Same three-equal-column layout as the popup's provider rows
+ * (.provider-row-main/.provider-row-col in App.css) — label / type /
+ * status, kept visually consistent between the two surfaces. */
+.provider-row-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Default's tag and Set Default's button occupy the same column —
+   * pin the row to fit the taller of the two so switching between them
+   * doesn't reflow the row (same fix as the popup). */
+  min-height: 25px;
+}
+
+.provider-row-col {
+  flex: 1;
+  min-width: 0;
+  text-align: center;
+}
+
 .provider-type {
-  margin-left: 8px;
   font-size: 11px;
   color: var(--color-parchment);
   opacity: 0.6;
@@ -66,7 +94,6 @@ section {
 }
 
 .provider-default {
-  margin-left: 8px;
   font-size: 11px;
   font-weight: 600;
   color: var(--color-bg);
@@ -75,9 +102,18 @@ section {
   border-radius: 4px;
 }
 
+.set-default-button {
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
 .provider-actions {
   display: flex;
   gap: 6px;
+}
+
+.provider-remove-button {
+  line-height: 1;
 }
 
 .provider-detail {
