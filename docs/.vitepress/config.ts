@@ -46,7 +46,37 @@ export default defineConfig({
         },
         {
           text: 'For developers',
-          items: [{ text: 'The page-facing API', link: '/docs/api' }],
+          items: [
+            {
+              text: 'The page-facing API',
+              link: '/docs/api',
+              items: [
+                {
+                  text: 'Before you start',
+                  link: '/docs/api#before-you-start',
+                },
+                { text: 'Connecting', link: '/docs/api#connecting' },
+                {
+                  text: 'Asking for a completion',
+                  link: '/docs/api#asking-for-a-completion',
+                },
+                {
+                  text: 'Provider-specific interfaces',
+                  link: '/docs/api#provider-specific-interfaces',
+                },
+                {
+                  text: 'Other things you can check',
+                  link: '/docs/api#other-things-you-can-check',
+                },
+                { text: 'Events', link: '/docs/api#events' },
+                { text: 'Error handling', link: '/docs/api#error-handling' },
+                {
+                  text: 'Using Aquilifer as a fallback',
+                  link: '/docs/api#using-aquilifer-as-a-fallback',
+                },
+              ],
+            },
+          ],
         },
         {
           text: 'Honesty',
