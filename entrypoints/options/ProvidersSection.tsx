@@ -103,7 +103,7 @@ function ProvidersSection() {
     // Checked up front, before any network call below — failing only at
     // the final encrypt step would waste that call for nothing.
     if (vaultLocked) {
-      setError('Vault is locked — unlock it from the Security tab first.');
+      setError('Vault is locked. Unlock it from the Security tab first.');
       return;
     }
     if (form.type === 'anthropic' && !form.apiKey.trim()) {

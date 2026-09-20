@@ -1,11 +1,11 @@
 # Installing
 
-Aquilifer isn't published to the Chrome Web Store yet — for now, install it from source.
+Aquilifer isn't published to the Chrome Web Store yet, so for now, install it from source.
 
 ## Requirements
 
 - [Node.js](https://nodejs.org/) (a recent LTS version) and npm.
-- A Chromium-based browser (Chrome, Edge, Brave, etc.) — Aquilifer currently targets Chrome's Manifest V3 only. Firefox and other browsers aren't supported yet.
+- A Chromium-based browser (Chrome, Edge, Brave, etc.). Aquilifer currently targets Chrome's Manifest V3 only. Firefox and other browsers aren't supported yet.
 
 ## Build it
 
@@ -27,7 +27,7 @@ Aquilifer's icon should now appear in your browser toolbar. Next: [connect a pro
 
 ### About the "read and change all your data on all websites" warning
 
-Chrome shows this on the extension's `chrome://extensions` details page (and would show it on the Web Store listing/install dialog too, once Aquilifer is published there). It's expected, and it's what lets any website detect Aquilifer and offer to connect without you doing anything extension-specific first — the same MetaMask-style pattern `window.ethereum` uses. MetaMask itself requests the same broad access for the same reason. Aquilifer never acts on a page without your explicit, visible approval — see [Connecting a site](/docs/connecting) — the broad access is about where the connection *offer* can appear, not what it's allowed to do without you.
+Chrome shows this on the extension's `chrome://extensions` details page (and would show it on the Web Store listing/install dialog too, once Aquilifer is published there). It's expected, and it's what lets any website detect Aquilifer and offer to connect without you doing anything extension-specific first, the same MetaMask-style pattern `window.ethereum` uses. MetaMask itself requests the same broad access for the same reason. Aquilifer never acts on a page without your explicit, visible approval (see [Connecting a site](/docs/connecting)); the broad access is about where the connection *offer* can appear, not what it's allowed to do without you.
 
 ## Staying up to date
 
