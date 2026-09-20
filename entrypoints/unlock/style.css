@@ -1,4 +1,14 @@
+/* Aquilifer color palette (SPEC §15) — same tokens as the popup/Options/
+ * Approve/Blocked. This previously used plain black-on-white
+ * browser-default styling instead of the shared theme; brought in line
+ * with the rest of the extension. */
 :root {
+  --color-bg: #14261c;
+  --color-bg-raised: #1c3226;
+  --color-gold: #c9a227;
+  --color-red: #8b1e1e;
+  --color-parchment: #f2ede4;
+
   /* Type scale — every font-size in this stylesheet reads from one of
    * these instead of a literal px value, so a single multiplier can
    * resize all of them together. --font-scale is overwritten on load
@@ -19,7 +29,8 @@ body {
    * instead of silently falling back to the browser's own small ambient
    * default. */
   font-size: var(--font-size-md);
-  color: #1a1a1a;
+  color: var(--color-parchment);
+  background-color: var(--color-bg);
 }
 
 main {
@@ -29,6 +40,7 @@ main {
 h1 {
   font-size: var(--font-size-xl);
   margin: 0 0 12px;
+  color: var(--color-gold);
 }
 
 p {
@@ -37,7 +49,7 @@ p {
 }
 
 .warning {
-  color: #c0392b;
+  color: var(--color-red);
 }
 
 label {
@@ -52,7 +64,9 @@ input[type="password"] {
   padding: 8px;
   font-size: var(--font-size-md);
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: var(--color-bg-raised);
+  color: var(--color-parchment);
 }
 
 .actions {
@@ -61,22 +75,35 @@ input[type="password"] {
   margin-top: 20px;
 }
 
+/* Same outlined-secondary / solid-primary split as approve.html's
+ * Deny/Approve pair — Cancel is the first button here (secondary),
+ * Unlock the last (primary), same DOM order. */
 button {
   flex: 1;
   padding: 8px 12px;
   font-size: var(--font-size-md);
   border-radius: 6px;
-  border: 1px solid #ccc;
+  border: 1px solid var(--color-gold);
+  color: var(--color-gold);
+  background-color: rgba(201, 162, 39, 0.08);
   cursor: pointer;
 }
 
-button[type="submit"] {
-  background: #1a1a1a;
-  color: white;
-  border-color: #1a1a1a;
+button:hover {
+  background-color: rgba(201, 162, 39, 0.18);
+}
+
+button:last-child {
+  background: var(--color-gold);
+  color: var(--color-bg);
+  font-weight: 600;
+}
+
+button:last-child:hover {
+  background: #ddb62d;
 }
 
 button:disabled {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: default;
 }
