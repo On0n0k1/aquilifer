@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import AppearanceSection from './AppearanceSection';
 import ConnectedSitesSection from './ConnectedSitesSection';
 import HistorySection from './HistorySection';
 import ProvidersSection from './ProvidersSection';
@@ -11,6 +12,7 @@ type PageTab =
   | 'connectedSites'
   | 'rateLimits'
   | 'history'
+  | 'appearance'
   | 'security';
 
 const TAB_LABELS: Record<PageTab, string> = {
@@ -18,6 +20,7 @@ const TAB_LABELS: Record<PageTab, string> = {
   connectedSites: 'Connected sites',
   rateLimits: 'Rate limiting',
   history: 'History',
+  appearance: 'Appearance',
   security: 'Security',
 };
 
@@ -47,6 +50,7 @@ function App() {
       {tab === 'connectedSites' && <ConnectedSitesSection />}
       {tab === 'rateLimits' && <RateLimitsSection />}
       {tab === 'history' && <HistorySection />}
+      {tab === 'appearance' && <AppearanceSection />}
       {tab === 'security' && <SecuritySection />}
     </main>
   );

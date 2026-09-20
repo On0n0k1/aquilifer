@@ -188,6 +188,18 @@ export default defineConfig({
                 { text: 'Turning it off', link: '/docs/vault#turning-it-off' },
               ],
             },
+            {
+              text: 'Appearance',
+              link: '/docs/appearance',
+              collapsed: true,
+              items: [
+                { text: 'Font size', link: '/docs/appearance#font-size' },
+                {
+                  text: 'Popup width',
+                  link: '/docs/appearance#popup-width',
+                },
+              ],
+            },
           ],
         },
         {

@@ -1,9 +1,12 @@
 :root {
   /* Type scale — every font-size in this stylesheet reads from one of
    * these instead of a literal px value, so a single multiplier can
-   * resize all of them together (planned: a settings-page font-size
-   * control that sets --font-scale). The base px values are this
-   * scale's already-tuned "1x" sizes, not arbitrary. */
+   * resize all of them together. --font-scale is overwritten on load
+   * with the user's saved Appearance-tab choice (lib/
+   * apply-ui-preferences.ts, called from main.tsx before the first
+   * render) — the value here is just the pre-preferences fallback,
+   * matching lib/ui-preferences.ts's own default. The base px values
+   * are this scale's already-tuned "1x" sizes, not arbitrary. */
   --font-scale: 1;
   --font-size-md: calc(17px * var(--font-scale));
   --font-size-xl: calc(21px * var(--font-scale));

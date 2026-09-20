@@ -20,5 +20,6 @@ However this project grows, these stay true: they're the entire point of it, not
 - **[The toolbar popup](/docs/popup)**: the quick-glance view: what's connected, live rate-limit standing, switching models and the default provider.
 - **[Rate limiting](/docs/rate-limiting)** and **[History](/docs/history)**: the controls and the audit log that back the trust model.
 - **[The vault](/docs/vault)**: optional password-based encryption for stored API keys, and importantly, what it does *not* protect.
+- **[Appearance](/docs/appearance)**: font size and the toolbar popup's width.
 - **[The page-facing API](/docs/api)**: for developers integrating Aquilifer into a website.
 - **[Limitations & downsides](/docs/limitations)**: read this one. Every project has tradeoffs; this page is where they're written down instead of left for you to discover.
