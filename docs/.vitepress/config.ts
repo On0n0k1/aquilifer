@@ -11,6 +11,33 @@ export default defineConfig({
   // client-side route generation).
   base: '/aquilifer/',
   cleanUrls: true,
+  // Same icon renders as the extension's own manifest icons
+  // (public/icon/ at the repo root) — copied into docs/public/icon/
+  // rather than referenced across package boundaries, since this is a
+  // separate VitePress project with its own public dir. `head` entries
+  // are injected as raw HTML, not resolved through VitePress's router,
+  // so the base prefix has to be spelled out by hand here (unlike
+  // frontmatter/markdown asset references, which get it automatically).
+  head: [
+    [
+      'link',
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '32x32',
+        href: '/aquilifer/icon/32.png',
+      },
+    ],
+    [
+      'link',
+      {
+        rel: 'icon',
+        type: 'image/png',
+        sizes: '16x16',
+        href: '/aquilifer/icon/16.png',
+      },
+    ],
+  ],
   // Aquilifer's brand palette (theme/custom.css) is a fixed dark-green
   // identity, not a light/dark-mode-following neutral — same reasoning as
   // the extension's own CSS. force-dark drops the toggle entirely rather
