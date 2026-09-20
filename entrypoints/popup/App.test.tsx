@@ -165,7 +165,35 @@ describe('providers configured', () => {
     ).toBeInTheDocument();
   });
 
-  it('changing the model can be cancelled without saving, even with only one model available', async () => {
+  it('picking a different model saves it and closes the picker', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 200,
+      json: async () => ({
+        data: [
+          { id: 'claude-test', display_name: 'Claude Test' },
+          { id: 'claude-other', display_name: 'Claude Other' },
+        ],
+      }),
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<App />);
+    await userEvent.click(
+      await screen.findByRole('button', { name: 'Change' }),
+    );
+
+    const combobox = await screen.findByRole('combobox');
+    await userEvent.selectOptions(combobox, 'claude-other');
+
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
+    expect(screen.getByText('claude-other')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Change' })).toBeInTheDocument();
+
+    vi.unstubAllGlobals();
+  });
+
+  it('re-picking the already-active model also closes the picker', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
       status: 200,
@@ -180,13 +208,19 @@ describe('providers configured', () => {
       await screen.findByRole('button', { name: 'Change' }),
     );
 
-    expect(await screen.findByRole('combobox')).toBeInTheDocument();
-    await userEvent.click(
-      screen.getByRole('button', { name: 'Cancel changing model' }),
+    const combobox = await screen.findByRole('combobox');
+    // Passing the raw id string 'claude-test' here would be ambiguous:
+    // jsdom's userEvent matches by value OR label text, and the hidden
+    // placeholder option's displayed text is also "claude-test" (it shows
+    // the current model's name). Resolving the real <option> by its
+    // visible label first sidesteps that collision.
+    await userEvent.selectOptions(
+      combobox,
+      within(combobox).getByRole('option', { name: 'Claude Test' }),
     );
 
     expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Change' })).toBeInTheDocument();
+    expect(screen.getByText('claude-test')).toBeInTheDocument();
 
     vi.unstubAllGlobals();
   });

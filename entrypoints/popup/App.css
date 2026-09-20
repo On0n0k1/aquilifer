@@ -193,10 +193,6 @@
   padding: 4px 8px;
 }
 
-.model-picker-cancel {
-  line-height: 1;
-}
-
 /* An active-state indicator (SPEC §15) — the other legitimate use of the
  * red accent alongside the near-limit rate bar. */
 .in-use-spinner {

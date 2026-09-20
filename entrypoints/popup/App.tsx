@@ -290,11 +290,22 @@ function App() {
                     <div className="provider-model-slot">
                       {picker?.status === 'ready' ? (
                         <select
-                          value={provider.model}
+                          defaultValue=""
                           onChange={(event) =>
                             handleSelectModel(provider, event.target.value)
                           }
                         >
+                          {/* A native select only fires onChange when its
+                           * value actually changes — re-picking the model
+                           * that's already active wouldn't fire anything if
+                           * this started on provider.model. Starting on a
+                           * hidden sentinel instead (never a real option's
+                           * value) makes every pick, including that one, a
+                           * genuine value change, while still displaying the
+                           * current model's name until something's chosen. */}
+                          <option value="" disabled hidden>
+                            {provider.model}
+                          </option>
                           {picker.models?.map((model) => (
                             <option key={model.id} value={model.id}>
                               {model.label}
@@ -307,17 +318,7 @@ function App() {
                         </span>
                       )}
                     </div>
-                    {picker?.status === 'ready' ? (
-                      <button
-                        type="button"
-                        className="model-picker-cancel"
-                        aria-label="Cancel changing model"
-                        title="Cancel"
-                        onClick={() => closeModelPicker(provider.id)}
-                      >
-                        ✕
-                      </button>
-                    ) : (
+                    {picker?.status !== 'ready' && (
                       <button
                         type="button"
                         onClick={() => openModelPicker(provider)}
