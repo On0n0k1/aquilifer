@@ -19,8 +19,8 @@ Every project has tradeoffs. This page exists so they're written down plainly in
 
 - **Chrome (and other Chromium browsers) only, for now.** Aquilifer targets Manifest V3; Firefox, Safari, and other browsers aren't supported yet.
 - **Not on the Chrome Web Store yet**: install from source (see [Installing](/docs/installing)). Updates aren't automatic until it's published there.
-- **No npm package yet** for developers who want typed access to `window.aquilifer` without hand-writing the types themselves; see the [page-facing API docs](/docs/api) for the current reference in the meantime.
-- **Visual design is in progress.** The toolbar popup, Options page, and the connect/switch approval popup have a real color theme; the rate-limit "Blocked" popup is still plain, functional markup.
+- **No npm package yet** for developers who want typed access to `window.aquilifer` without hand-writing the types themselves. The planned name is `aquilifer-types`, not published yet; see the [page-facing API docs](/docs/api) for the current reference in the meantime.
+- **Visual design is in progress.** The toolbar popup, Options page, the connect/switch approval popup, and the rate-limit "Blocked" popup all share the real color theme; the vault unlock popup is still plain, functional markup.
 
 ## Found something not listed here?
 
