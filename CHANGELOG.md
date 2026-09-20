@@ -1,3 +1,20 @@
+# [1.3.0](https://github.com/On0n0k1/aquilifer/compare/v1.2.0...v1.3.0) (2026-09-20)
+
+
+### Bug Fixes
+
+* **options:** separate History's prompt from its response ([286d1ee](https://github.com/On0n0k1/aquilifer/commit/286d1eed1c41c89da69c7273400eb6e2eed9ef68))
+* **options:** use one fixed width across every tab, not just History ([7a53eb3](https://github.com/On0n0k1/aquilifer/commit/7a53eb342f4c5005234cab1cdaf39c5961a4ffd4))
+* **popup:** rename 'Manage providers' button to 'Settings' ([a91b3f7](https://github.com/On0n0k1/aquilifer/commit/a91b3f7a7a827a27f49b8bd2a82ae0ae431514e9))
+
+
+### Features
+
+* **docs:** apply the Aquilifer color palette to the docs site ([c1e1f72](https://github.com/On0n0k1/aquilifer/commit/c1e1f7206bfa3b998ad8115711a554d5f27e7c49))
+* **options:** add a Dark/Light toggle for History entry cards ([7d36573](https://github.com/On0n0k1/aquilifer/commit/7d36573002f54c91865e9a563b8e5a65e21493e6))
+* **options:** add hover tooltips to the block-notification checkboxes ([bb961d0](https://github.com/On0n0k1/aquilifer/commit/bb961d03b45eb957541311204d9e88239614c05c))
+* **options:** render generic-chat history as markdown, widen the tab ([44b252e](https://github.com/On0n0k1/aquilifer/commit/44b252e33a0ab423a42023e09a47a890705dba91))
+
 # [1.2.0](https://github.com/On0n0k1/aquilifer/compare/v1.1.1...v1.2.0) (2026-09-19)
 
 
