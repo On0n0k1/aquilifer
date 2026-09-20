@@ -110,6 +110,8 @@ section {
 }
 
 .page-tab {
+  flex: 1;
+  text-align: center;
   padding: 8px 14px;
   border: none;
   background: none;
@@ -136,6 +138,8 @@ section {
 }
 
 .tab {
+  flex: 1;
+  text-align: center;
   padding: 6px 10px;
   border: none;
   background: none;
