@@ -15,33 +15,43 @@ function AppearanceSection() {
     getUiPreferences().then(setPrefs);
   }, []);
 
+  function handleFontScaleChange(percent: number) {
+    const fontScale = percent / 100;
+    setPrefs((current) => ({ ...current, fontScale }));
+    // Live preview on this page as the slider moves — lets you land on a
+    // size by eye instead of save-check-adjust-save-check-adjust. Save
+    // still only persists it (and re-applies it, redundantly but
+    // harmlessly, to make the intent explicit either way).
+    document.documentElement.style.setProperty(
+      '--font-scale',
+      String(fontScale),
+    );
+  }
+
   async function handleSave(event: FormEvent) {
     event.preventDefault();
     await setUiPreferences(prefs);
-    // Applies immediately to this already-open Options page too, instead
-    // of only taking effect the next time it's reopened.
     await applyUiPreferences();
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
+
+  const fontPercent = Math.round(prefs.fontScale * 100);
 
   return (
     <section>
       <h2>Appearance</h2>
       <form onSubmit={handleSave}>
         <label title="Scales every piece of text across the popup, settings, and every approval/unlock popup together, proportionally.">
-          Font size (%)
+          Font size ({fontPercent}%)
           <input
-            type="number"
+            type="range"
             min={50}
             max={200}
             step={10}
-            value={Math.round(prefs.fontScale * 100)}
+            value={fontPercent}
             onChange={(event) =>
-              setPrefs({
-                ...prefs,
-                fontScale: Number(event.target.value) / 100,
-              })
+              handleFontScaleChange(Number(event.target.value))
             }
           />
         </label>

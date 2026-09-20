@@ -12,8 +12,8 @@ describe('Appearance defaults', () => {
     render(<AppearanceSection />);
 
     expect(
-      screen.getByRole('spinbutton', { name: 'Font size (%)' }),
-    ).toHaveValue(100);
+      screen.getByRole('slider', { name: 'Font size (100%)' }),
+    ).toHaveValue('100');
     expect(
       screen.getByRole('spinbutton', { name: 'Popup width (pixels)' }),
     ).toHaveValue(500);
@@ -24,7 +24,7 @@ describe('Appearance field tooltips', () => {
   it('explain what each field actually affects', () => {
     render(<AppearanceSection />);
 
-    expect(screen.getByText('Font size (%)')).toHaveAttribute(
+    expect(screen.getByText('Font size (100%)')).toHaveAttribute(
       'title',
       expect.stringContaining('every piece of text'),
     );
@@ -35,18 +35,37 @@ describe('Appearance field tooltips', () => {
   });
 });
 
+describe('Moving the font-size slider', () => {
+  it('live-previews on the page immediately, without saving', async () => {
+    render(<AppearanceSection />);
+
+    const slider = screen.getByRole('slider', { name: 'Font size (100%)' });
+    // Wait for the effect's own async getUiPreferences() load to settle
+    // first — firing the change before it resolves risks the load
+    // clobbering this edit right after, since both write the same state.
+    await waitFor(() => expect(slider).toHaveValue('100'));
+    fireEvent.change(slider, { target: { value: '130' } });
+
+    expect(
+      screen.getByRole('slider', { name: 'Font size (130%)' }),
+    ).toBeInTheDocument();
+    expect(
+      document.documentElement.style.getPropertyValue('--font-scale'),
+    ).toBe('1.3');
+
+    // Not persisted until Save is actually clicked.
+    const stored = await browser.storage.local.get('uiPreferences');
+    expect(stored.uiPreferences).toBeUndefined();
+  });
+});
+
 describe('Saving appearance', () => {
   it('persists changed values and shows a confirmation', async () => {
     render(<AppearanceSection />);
 
-    const fontSizeInput = screen.getByRole('spinbutton', {
-      name: 'Font size (%)',
-    });
-    // Wait for the effect's own async getUiPreferences() load to settle
-    // first — firing the change before it resolves risks the load
-    // clobbering this edit right after, since both write the same state.
-    await waitFor(() => expect(fontSizeInput).toHaveValue(100));
-    fireEvent.change(fontSizeInput, { target: { value: '130' } });
+    const slider = screen.getByRole('slider', { name: 'Font size (100%)' });
+    await waitFor(() => expect(slider).toHaveValue('100'));
+    fireEvent.change(slider, { target: { value: '130' } });
 
     await userEvent.click(
       screen.getByRole('button', { name: 'Save appearance' }),
