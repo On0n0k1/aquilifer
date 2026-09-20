@@ -80,3 +80,17 @@
 body {
   background-color: var(--color-bg);
 }
+
+/* Scroll-spy for the left sidebar's own anchor links (theme/index.ts +
+ * sidebar-scroll-spy.ts) — VitePress's built-in scroll-spy only
+ * highlights the right-side "On this page" outline, never the left
+ * sidebar, even for sidebar items that point at in-page anchors. Styled
+ * to match that same is-active treatment (brand-gold text + indicator
+ * bar) so the two read as one consistent behavior. */
+.VPSidebar .link.sidebar-scroll-active .text {
+  color: var(--vp-c-brand-1);
+}
+
+.VPSidebar .item:has(.link.sidebar-scroll-active) > .indicator {
+  background-color: var(--vp-c-brand-1);
+}
