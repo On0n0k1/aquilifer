@@ -25,7 +25,7 @@ function App() {
   const [tab, setTab] = useState<PageTab>('providers');
 
   return (
-    <main className={tab === 'history' ? 'wide' : undefined}>
+    <main>
       <h1>Aquilifer settings</h1>
 
       <div className="page-tab-bar" role="tablist">

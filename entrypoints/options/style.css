@@ -17,17 +17,13 @@ body {
   background-color: var(--color-bg);
 }
 
+/* One fixed width across every tab (originally just History, which needs
+ * the room for markdown-rendered code blocks) — switching tabs at
+ * different widths made the whole page visibly resize on every click. */
 main {
-  max-width: 480px;
+  max-width: 860px;
   margin: 0 auto;
   padding: 32px 20px;
-}
-
-/* History entries can carry full markdown-rendered LLM responses (code
- * blocks especially need horizontal room) — wider than the other tabs'
- * shared form-width layout, applied only to History (App.tsx). */
-main.wide {
-  max-width: 860px;
 }
 
 h1 {
