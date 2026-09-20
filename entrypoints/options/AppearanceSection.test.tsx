@@ -93,6 +93,22 @@ describe('The popup preview', () => {
     expect(screen.getByText('openai-compatible')).toBeInTheDocument();
     expect(screen.getByText('gpt-5')).toBeInTheDocument();
   });
+
+  it('shows the not-connected site text and the model/default controls', () => {
+    render(<AppearanceSection />);
+
+    expect(
+      screen.getByText("This site isn't connected to a provider."),
+    ).toBeInTheDocument();
+
+    expect(screen.getByText('Default')).toBeInTheDocument();
+
+    const preview = document.querySelector('.popup-size-preview');
+    const buttonLabels = Array.from(
+      preview?.querySelectorAll('button') ?? [],
+    ).map((button) => button.textContent);
+    expect(buttonLabels).toEqual(['Change', 'Set Default', 'Change']);
+  });
 });
 
 describe('Saving appearance', () => {

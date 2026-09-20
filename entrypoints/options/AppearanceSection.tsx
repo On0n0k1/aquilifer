@@ -73,28 +73,51 @@ function AppearanceSection() {
               style={{ width: prefs.popupWidth }}
             >
               <strong className="popup-size-preview-title">Aquilifer</strong>
+              <p className="popup-size-preview-current-site">
+                This site isn't connected to a provider.
+              </p>
               <ul className="popup-size-preview-providers">
                 <li>
                   <div className="popup-size-preview-provider-row">
                     <strong>Personal Claude</strong>
-                    <span className="popup-size-preview-provider-type">
-                      anthropic
-                    </span>
+                    <div className="popup-size-preview-provider-row-end">
+                      <span className="popup-size-preview-provider-type">
+                        anthropic
+                      </span>
+                      <span className="popup-size-preview-default-tag">
+                        Default
+                      </span>
+                    </div>
                   </div>
-                  <span className="popup-size-preview-provider-model">
-                    claude-opus-5
-                  </span>
+                  <div className="popup-size-preview-provider-model-row">
+                    <span className="popup-size-preview-provider-model">
+                      claude-opus-5
+                    </span>
+                    <button type="button" disabled>
+                      Change
+                    </button>
+                  </div>
                 </li>
                 <li>
                   <div className="popup-size-preview-provider-row">
                     <strong>Work OpenAI</strong>
-                    <span className="popup-size-preview-provider-type">
-                      openai-compatible
-                    </span>
+                    <div className="popup-size-preview-provider-row-end">
+                      <span className="popup-size-preview-provider-type">
+                        openai-compatible
+                      </span>
+                      <button type="button" disabled>
+                        Set Default
+                      </button>
+                    </div>
                   </div>
-                  <span className="popup-size-preview-provider-model">
-                    gpt-5
-                  </span>
+                  <div className="popup-size-preview-provider-model-row">
+                    <span className="popup-size-preview-provider-model">
+                      gpt-5
+                    </span>
+                    <button type="button" disabled>
+                      Change
+                    </button>
+                  </div>
                 </li>
               </ul>
             </div>
