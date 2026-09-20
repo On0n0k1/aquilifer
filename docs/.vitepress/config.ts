@@ -46,6 +46,7 @@ export default defineConfig({
   appearance: 'force-dark',
 
   themeConfig: {
+    logo: '/icon/32.png',
     nav: [
       { text: 'Home', link: '/' },
       { text: 'Docs', link: '/docs/' },
