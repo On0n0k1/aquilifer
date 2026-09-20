@@ -98,6 +98,16 @@ export default defineBackground(() => {
   // gone anyway, so there's nothing meaningful to recover.
   const activeRequestCounts = new Map<string, number>();
 
+  // origin -> timestamp of the last block notification/popup shown for it.
+  // A site retrying immediately after being rate-limited hits this same
+  // blocked path on every single call — without a cooldown, that's a
+  // fresh OS notification *and* a fresh browser popup window per call,
+  // not just an annoyance but a way for a site to spam actual windows
+  // open. In-memory only: losing it on a service-worker restart just
+  // means the next block after a restart always alerts, which is fine.
+  const lastBlockedAlertAt = new Map<string, number>();
+  const BLOCKED_ALERT_COOLDOWN_MS = 15_000;
+
   function trackActiveRequest<T>(
     providerId: string,
     work: () => Promise<T>,
@@ -505,6 +515,10 @@ export default defineBackground(() => {
   }
 
   async function handleBlocked(origin: string) {
+    const lastAlertedAt = lastBlockedAlertAt.get(origin) ?? 0;
+    if (Date.now() - lastAlertedAt < BLOCKED_ALERT_COOLDOWN_MS) return;
+    lastBlockedAlertAt.set(origin, Date.now());
+
     const settings = await getRateLimitSettings();
 
     if (settings.notifyOnBlock) {
