@@ -12,9 +12,16 @@ A provider is a connection between Aquilifer and one LLM backend, using your own
 
 You don't pick a model when adding a provider — just connect it, and choose the model afterward.
 
+![The Providers tab with no providers configured yet, and the empty Add provider form below it](/screenshots/providers-empty.png)
+
 1. Fill in a label (just for your own reference — sites never see it) and the credential (API key for Anthropic; base URL, and optionally an API key, for OpenAI-compatible).
+
+   ![The Add provider form filled in with a label and a masked API key](/screenshots/providers-form.png)
+
 2. Click **Connect**. Aquilifer asks the provider itself which models are available — this both discovers what you can use and proves the credential/URL actually work, with no separate test request needed. The first model returned is picked automatically; you can change it any time afterward from [the toolbar popup](/docs/popup).
 3. If the provider doesn't support listing its own models (some self-hosted backends don't), Aquilifer asks you to type a model ID manually instead, then verifies it with one real request before saving.
+
+![The Providers tab after connecting, showing the new provider marked as the default with its auto-picked model](/screenshots/providers-added.png)
 
 For a self-hosted/local backend, connecting it the first time will also ask your browser for permission to make requests to that URL — this is a one-time browser permission prompt, separate from Aquilifer's own connect-a-site approval.
 

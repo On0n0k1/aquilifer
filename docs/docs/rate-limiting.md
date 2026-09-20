@@ -9,13 +9,17 @@ Rate limits protect *your* usage — your spend, your quota — regardless of wh
 
 A request is blocked if it exceeds *either* limit. Both are configurable — window length and request count — from the **Rate limiting** tab in settings, with sensible defaults out of the box.
 
+![The Rate limiting settings tab, showing the global and per-interface limits, the large-request warning threshold, the block-alert cooldown, and the notification/popup checkboxes](/screenshots/rate-limiting-settings.png)
+
 [The toolbar popup](/docs/popup) shows the current site's real standing against these limits at a glance — whichever tier (global or per-interface) is closest to blocking, not just the configured threshold — so you can see it's getting close before it actually happens.
 
 ## What happens when a request is blocked
 
 - It fails immediately, without reaching the provider (no cost incurred).
 - It's logged to [History](/docs/history) like any other request, marked as blocked.
-- You can optionally turn on a browser notification and/or a popup when a block happens, so you notice if something's calling more than expected.
+- You can optionally turn on a browser notification and/or a popup when a block happens, so you notice if something's calling more than expected. Repeated blocks from the same site share a cooldown (15 seconds by default, configurable above) rather than alerting on every single retry.
+
+![The 'Rate limit reached' popup, naming the site that got blocked](/screenshots/rate-limit-popup.png)
 
 ## A note for large requests
 

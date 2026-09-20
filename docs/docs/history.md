@@ -2,6 +2,8 @@
 
 Every request a connected site makes is logged — which site, when, what was asked, and what came back (or the error, if it failed). It's a read-only audit log for *you*, viewable from the **History** tab in settings.
 
+![A History entry card showing the site, timestamp, provider, prompt, and a markdown-rendered response with bold text and a bullet list](/screenshots/history-entry.png)
+
 ## It's audit-only, never replayed
 
 Aquilifer never feeds history back into a future request. Every call is stateless — a site sends the full conversation it wants answered on that one call, exactly like calling the underlying provider's API directly. This is deliberate: it avoids silent, creeping token costs from an ever-growing conversation you didn't ask to keep paying for, and it means history is purely something you can look back at, not something that quietly affects behavior.
