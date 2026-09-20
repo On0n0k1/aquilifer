@@ -1,3 +1,17 @@
+# [1.5.0](https://github.com/On0n0k1/aquilifer/compare/v1.4.0...v1.5.0) (2026-09-20)
+
+
+### Bug Fixes
+
+* **options:** drop popup height setting, preview two fake providers ([ec8e8c8](https://github.com/On0n0k1/aquilifer/commit/ec8e8c89d117e5fb5f428ea6dfc626f98fb14317))
+
+
+### Features
+
+* **options:** add an Appearance tab for font size and popup width ([460e0d0](https://github.com/On0n0k1/aquilifer/commit/460e0d09f613271596ca87332d3357030c1ccea5))
+* **options:** live-preview font size and use a slider for it ([b6d96a7](https://github.com/On0n0k1/aquilifer/commit/b6d96a7b3f7dd1ae4a851c2ba3827d293a9ce9a0))
+* **options:** round out the popup preview's fake state ([4f04d91](https://github.com/On0n0k1/aquilifer/commit/4f04d91170b31a79c6ecfcfc194cd9fa0dfc853d))
+
 # [1.4.0](https://github.com/On0n0k1/aquilifer/compare/v1.3.0...v1.4.0) (2026-09-20)
 
 
