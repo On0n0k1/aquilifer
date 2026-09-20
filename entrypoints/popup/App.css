@@ -15,7 +15,7 @@
 }
 
 .popup-header h1 {
-  font-size: 15px;
+  font-size: var(--font-size-lg);
   margin: 0;
   color: var(--color-gold);
   letter-spacing: 0.02em;
@@ -39,7 +39,7 @@
 }
 
 .current-site-label {
-  font-size: 13px;
+  font-size: var(--font-size-md);
   margin: 0 0 8px;
 }
 
@@ -69,7 +69,7 @@
 }
 
 .rate-bar-label {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-parchment);
   opacity: 0.7;
   margin: 6px 0 0;
@@ -109,8 +109,9 @@
    * Default" button — a real button (border + larger padding) is taller
    * than the plain tag, so pin the row to fit the taller of the two
    * instead of chasing pixel-perfect parity between them; switching
-   * which one renders then never reflows the row. */
-  min-height: 25px;
+   * which one renders then never reflows the row. Scaled with the rest
+   * of this stylesheet's ~4/3 font-size increase (was 25px). */
+  min-height: 33px;
 }
 
 .provider-row-col {
@@ -120,7 +121,7 @@
 }
 
 .provider-detail {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-parchment);
   opacity: 0.6;
 }
@@ -148,13 +149,13 @@
 }
 
 .provider-model-row button {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   padding: 4px 8px;
 }
 
 .provider-model-row select {
   width: 100%;
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   padding: 4px 6px;
   border-radius: 4px;
   border: 1px solid var(--color-gold);
@@ -163,17 +164,23 @@
 }
 
 .model-picker-error {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-red);
   margin: 0;
 }
 
 .provider-list li strong {
+  /* Never had its own font-size, unlike every other piece of text in
+   * this row (.provider-type, .provider-detail, the status badges) — it
+   * was just inheriting the page's small ambient default instead of
+   * scaling with the rest, making the provider's name read smaller than
+   * its own metadata. */
+  font-size: var(--font-size-md);
   color: var(--color-gold);
 }
 
 .provider-type {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: var(--color-parchment);
   opacity: 0.6;
   text-transform: uppercase;
@@ -181,7 +188,7 @@
 
 .provider-current-site,
 .provider-default {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   font-weight: 600;
   color: var(--color-bg);
   background: var(--color-gold);
@@ -190,7 +197,7 @@
 }
 
 .set-default-button {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   padding: 4px 8px;
 }
 

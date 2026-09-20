@@ -255,8 +255,10 @@ export default defineBackground(() => {
         .create({
           url: browser.runtime.getURL('/unlock.html'),
           type: 'popup',
-          width: 340,
-          height: 260,
+          // Scaled with unlock/style.css's ~4/3 font-size increase (was
+          // 340x260) so the larger text has the same room as before.
+          width: 453,
+          height: 347,
         })
         .then((win) => {
           if (win?.id == null) return;
@@ -390,8 +392,11 @@ export default defineBackground(() => {
         .create({
           url: browser.runtime.getURL(`/approve.html?${params.toString()}`),
           type: 'popup',
-          width: 380,
-          height: 320,
+          // Scaled with approve/style.css's ~4/3 font-size increase (was
+          // 380x320) — at the old size "Aquilifer" itself started
+          // wrapping mid-word in the connection-request message.
+          width: 507,
+          height: 427,
         })
         .then((win) => {
           if (win?.id == null) return;
@@ -517,8 +522,11 @@ export default defineBackground(() => {
           `/blocked.html?origin=${encodeURIComponent(origin)}`,
         ),
         type: 'popup',
-        width: 360,
-        height: 260,
+        // Scaled with blocked/style.css's ~4/3 font-size increase (was
+        // 360x260) — at the old size ordinary words in the message
+        // started breaking mid-word to fit.
+        width: 480,
+        height: 347,
       });
     }
   }

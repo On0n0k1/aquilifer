@@ -7,16 +7,32 @@
   --color-gold: #c9a227;
   --color-red: #8b1e1e;
   --color-parchment: #f2ede4;
+
+  /* Type scale — every font-size in this stylesheet reads from one of
+   * these instead of a literal px value, so a single multiplier can
+   * resize all of them together (planned: a settings-page font-size
+   * control that sets --font-scale). The base px values are this
+   * scale's already-tuned "1x" sizes, not arbitrary. */
+  --font-scale: 1;
+  --font-size-xs: calc(15px * var(--font-scale));
+  --font-size-md: calc(17px * var(--font-scale));
+  --font-size-lg: calc(20px * var(--font-scale));
 }
 
 body {
   margin: 0;
-  /* +2em over the previous 320px, in the standard 1em = 16px sense — not
-   * literally 2 * the popup's own computed font-size (12px, a Chrome
-   * popup-default quirk unrelated to this stylesheet), which would read
-   * as a much smaller bump than intended. */
-  width: 352px;
+  /* Scaled by the same ~4/3 ratio as every font-size in this stylesheet
+   * (was 352px), plus extra to keep "OPENAI-COMPATIBLE" — the longest
+   * fixed string the type column ever holds — on one line at the new
+   * text size instead of wrapping. */
+  width: 500px;
   font-family: system-ui, sans-serif;
+  /* A baseline, not just a default for <body> text directly — anything
+   * without its own more specific font-size (a plain <p>, an unstyled
+   * label) inherits this instead of the browser's own small ambient
+   * default, which is what let text like the provider name go unnoticed
+   * at the wrong size until someone actually looked for it. */
+  font-size: var(--font-size-md);
   color: var(--color-parchment);
   background-color: var(--color-bg);
 }
@@ -25,7 +41,7 @@ button {
   border-radius: 6px;
   border: 1px solid var(--color-gold);
   padding: 6px 12px;
-  font-size: 13px;
+  font-size: var(--font-size-md);
   font-family: inherit;
   color: var(--color-gold);
   background-color: rgba(201, 162, 39, 0.08);
