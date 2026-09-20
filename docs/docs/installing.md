@@ -25,6 +25,10 @@ npm run build
 
 Aquilifer's icon should now appear in your browser toolbar. Next: [connect a provider](/docs/providers) and [try connecting a site](/docs/connecting).
 
+### About the "read and change all your data on all websites" warning
+
+Chrome shows this on the extension's `chrome://extensions` details page (and would show it on the Web Store listing/install dialog too, once Aquilifer is published there). It's expected, and it's what lets any website detect Aquilifer and offer to connect without you doing anything extension-specific first — the same MetaMask-style pattern `window.ethereum` uses. MetaMask itself requests the same broad access for the same reason. Aquilifer never acts on a page without your explicit, visible approval — see [Connecting a site](/docs/connecting) — the broad access is about where the connection *offer* can appear, not what it's allowed to do without you.
+
 ## Staying up to date
 
 Since this isn't on the Web Store yet, updates aren't automatic. Pull the latest changes and rebuild:
