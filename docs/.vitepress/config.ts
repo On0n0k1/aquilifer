@@ -318,12 +318,12 @@ export default defineConfig({
               collapsed: true,
               items: [
                 {
-                  text: 'Not on npm yet',
-                  link: '/docs/aquilifer-types#not-on-npm-yet',
+                  text: 'Installing it',
+                  link: '/docs/aquilifer-types#installing-it',
                 },
                 {
-                  text: "What it ships (once it's published)",
-                  link: '/docs/aquilifer-types#what-it-ships-once-it-s-published',
+                  text: 'What it ships',
+                  link: '/docs/aquilifer-types#what-it-ships',
                 },
                 {
                   text: "What it won't ship yet",

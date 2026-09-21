@@ -1,12 +1,16 @@
 # aquilifer-types
 
-A companion package: TypeScript types for `window.aquilifer`, so a website integrating Aquilifer gets full typing without hand-copying shapes from [the page-facing API docs](/docs/api). Source lives at [github.com/On0n0k1/aquilifer-types](https://github.com/On0n0k1/aquilifer-types).
+A companion package: TypeScript types for `window.aquilifer`, so a website integrating Aquilifer gets full typing without hand-copying shapes from [the page-facing API docs](/docs/api). Published on npm; source lives at [github.com/On0n0k1/aquilifer-types](https://github.com/On0n0k1/aquilifer-types).
 
-## Not on npm yet
+## Installing it
 
-The package is built: its types are hand-ported from this repo's own `lib/public-api.ts` and kept in sync with it, with the same two runtime helpers described below already implemented. It just isn't on the npm registry yet, so `npm install aquilifer-types` doesn't work yet. Until it's published, hand-write your own types against [the page-facing API](/docs/api) and its [generic](/docs/generic-api), [Anthropic Claude](/docs/anthropic-api), and [OpenAI-compatible](/docs/openai-compatible-api) sub-pages, or read the real source directly from the repo linked above.
+```sh
+npm install aquilifer-types
+```
 
-## What it ships (once it's published)
+Its types are hand-ported from this repo's own `lib/public-api.ts` and kept in sync with it. See the [package's own README](https://github.com/On0n0k1/aquilifer-types#readme) for usage examples; the shapes it exports match what [the page-facing API](/docs/api) and its [generic](/docs/generic-api), [Anthropic Claude](/docs/anthropic-api), and [OpenAI-compatible](/docs/openai-compatible-api) sub-pages document.
+
+## What it ships
 
 - The `window.aquilifer` type declaration itself, plus every type it depends on (across [the page-facing API](/docs/api) and its [generic](/docs/generic-api), [Anthropic Claude](/docs/anthropic-api), and [OpenAI-compatible](/docs/openai-compatible-api) sub-pages).
 - The provider-specific request/response/stream types, derived from the official `@anthropic-ai/sdk` and `openai` packages so they track each provider's own API shape rather than a hand-maintained copy.
