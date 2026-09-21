@@ -3,7 +3,7 @@
   "description": "A secure LLM provider for the web: websites ask for completions, never see your API key.",
   "license": "Apache-2.0",
   "private": true,
-  "version": "1.6.0",
+  "version": "1.6.1",
   "type": "module",
   "scripts": {
     "dev": "wxt",

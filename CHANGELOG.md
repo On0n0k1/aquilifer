@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/On0n0k1/aquilifer/compare/v1.6.0...v1.6.1) (2026-09-21)
+
+
+### Bug Fixes
+
+* **docs:** add docs/tsconfig.json to fix the deploy build ([4257ef8](https://github.com/On0n0k1/aquilifer/commit/4257ef810f205522b4d494f458f63a9bb7cd6685))
+
 # [1.6.0](https://github.com/On0n0k1/aquilifer/compare/v1.5.0...v1.6.0) (2026-09-21)
 
 
