@@ -1,90 +1,65 @@
-# Deploy Pages (SPEC §18) — syntactically valid but deliberately inert.
+# Deploy Pages (SPEC §18) — active. Builds docs/ (VitePress) and syncs the
+# output into On0n0k1/On0n0k1.github.io's sites/projects/aquilifer/, served
+# at on0n0k1.github.io/projects/aquilifer/. Fires on every push to main, so
+# a merge there goes live automatically — a deliberate choice made once the
+# project was ready to be shown publicly (see SPEC.md §18/§19 for the
+# readiness check this followed).
 #
-# A workflow file that's *entirely* comments (no `on`/`jobs`) parses to
-# YAML `null` — GitHub still registers it as a workflow purely because it
-# exists under .github/workflows/, and fails every push with "invalid
-# workflow file" (this is exactly what happened before this version). This
-# version fixes that by being valid YAML with a real, harmless job — but
-# still can't deploy anything: `workflow_dispatch` never fires on its own
-# (manual-trigger-only), and the job itself is just a placeholder echo, not
-# the real deploy steps.
-#
-# The docs site itself is implemented (docs/, VitePress) and builds cleanly
-# (`npm run build` inside docs/). Deploy stays disabled here on purpose —
-# it should only go live when the project is ready to be shown publicly,
-# not the moment this workflow becomes valid.
-#
-# To activate when that day comes:
-#   1. Replace the placeholder `deploy` job below with the real steps kept
-#      in the comment block at the bottom of this file.
-#   2. Add a `PAGES_DEPLOY_TOKEN` secret to this repo — a fine-grained PAT
-#      scoped to only On0n0k1/On0n0k1.github.io with Contents: Read & write
-#      (see SPEC.md §18 for why it's its own token, not reused elsewhere).
-#      Already done once, as of this writing — check it's still valid
-#      before relying on it if a lot of time has passed.
-#   3. Decide the trigger deliberately — keeping `workflow_dispatch` (manual
-#      only) keeps deploys a conscious action; adding a `push: branches:
-#      [main]` trigger makes every merge to main go live immediately, which
-#      is the behavior to avoid until the project is meant to be public.
+# Requires the PAGES_DEPLOY_TOKEN secret: a fine-grained PAT scoped to only
+# On0n0k1/On0n0k1.github.io with Contents: Read & write (see SPEC.md §18
+# for why it's its own token, not reused elsewhere).
 
 name: Deploy Pages
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    env:
+      PROJECT_NAME: aquilifer
+      BUILD_OUTPUT_DIR: docs/.vitepress/dist
     steps:
-      - run: echo "Deploy pipeline not enabled yet — see this file's comments to activate it."
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+      - run: npm ci
+        working-directory: docs
+      - run: npm run build
+        working-directory: docs
 
-# Real deploy steps, ready to swap in for the placeholder step above:
-#
-#     env:
-#       PROJECT_NAME: aquilifer         # URL segment: on0n0k1.github.io/projects/<PROJECT_NAME>
-#       # sites/projects/$PROJECT_NAME — the shared template's own default,
-#       # since several other projects live under sites/projects/ and
-#       # shouldn't mix with a one-off top-level directory (reversed from an
-#       # earlier deliberate deviation — see SPEC.md §18 for that history).
-#       BUILD_OUTPUT_DIR: docs/.vitepress/dist   # VitePress's default output, relative to repo root
-#     steps:
-#       - uses: actions/checkout@v4
-#       - uses: actions/setup-node@v4
-#         with:
-#           node-version: 22
-#           cache: npm
-#           cache-dependency-path: docs/package-lock.json
-#       - run: npm ci
-#         working-directory: docs
-#       - run: npm run build
-#         working-directory: docs
-#
-#       - name: Clone On0n0k1.github.io
-#         run: |
-#           git clone --depth 1 https://x-access-token:${{ secrets.PAGES_DEPLOY_TOKEN }}@github.com/On0n0k1/On0n0k1.github.io.git "$RUNNER_TEMP/pages-repo"
-#
-#       - name: Sync built site into sites/projects/$PROJECT_NAME
-#         run: |
-#           PAGES_REPO="$RUNNER_TEMP/pages-repo"
-#           rm -rf "$PAGES_REPO/sites/projects/$PROJECT_NAME"
-#           mkdir -p "$PAGES_REPO/sites/projects/$PROJECT_NAME"
-#           cp -r "$BUILD_OUTPUT_DIR"/. "$PAGES_REPO/sites/projects/$PROJECT_NAME/"
-#
-#       - name: Commit and push
-#         run: |
-#           cd "$RUNNER_TEMP/pages-repo"
-#           git config user.name "github-actions[bot]"
-#           git config user.email "github-actions[bot]@users.noreply.github.com"
-#           git add -A
-#           if git diff --staged --quiet; then
-#             echo "No changes to deploy."
-#             exit 0
-#           fi
-#           git commit -m "deploy: sync $PROJECT_NAME from ${{ github.repository }}@${{ github.sha }}"
-#           for i in 1 2 3 4 5; do
-#             git push && exit 0
-#             echo "Push rejected, retrying with rebase ($i)..."
-#             git pull --rebase
-#           done
-#           echo "Push failed after retries" >&2
-#           exit 1
+      - name: Clone On0n0k1.github.io
+        run: |
+          git clone --depth 1 https://x-access-token:${{ secrets.PAGES_DEPLOY_TOKEN }}@github.com/On0n0k1/On0n0k1.github.io.git "$RUNNER_TEMP/pages-repo"
+
+      - name: Sync built site into sites/projects/$PROJECT_NAME
+        run: |
+          PAGES_REPO="$RUNNER_TEMP/pages-repo"
+          rm -rf "$PAGES_REPO/sites/projects/$PROJECT_NAME"
+          mkdir -p "$PAGES_REPO/sites/projects/$PROJECT_NAME"
+          cp -r "$BUILD_OUTPUT_DIR"/. "$PAGES_REPO/sites/projects/$PROJECT_NAME/"
+
+      - name: Commit and push
+        run: |
+          cd "$RUNNER_TEMP/pages-repo"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to deploy."
+            exit 0
+          fi
+          git commit -m "deploy: sync $PROJECT_NAME from ${{ github.repository }}@${{ github.sha }}"
+          for i in 1 2 3 4 5; do
+            git push && exit 0
+            echo "Push rejected, retrying with rebase ($i)..."
+            git pull --rebase
+          done
+          echo "Push failed after retries" >&2
+          exit 1
