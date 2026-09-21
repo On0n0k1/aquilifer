@@ -1,12 +1,12 @@
 # aquilifer-types
 
-A planned companion npm package: TypeScript types for `window.aquilifer`, so a website integrating Aquilifer gets full typing without hand-copying shapes from [the page-facing API docs](/docs/api).
+A companion package: TypeScript types for `window.aquilifer`, so a website integrating Aquilifer gets full typing without hand-copying shapes from [the page-facing API docs](/docs/api). Source lives at [github.com/On0n0k1/aquilifer-types](https://github.com/On0n0k1/aquilifer-types).
 
-## Not published yet
+## Not on npm yet
 
-`aquilifer-types` is a reserved name, not a published package. Work on it hasn't started, deliberately deferred until [the page-facing API](/docs/api) is considered stable, since a breaking change there would mean a breaking change here too. Until it exists, hand-write your own types against [the page-facing API](/docs/api) and its [generic](/docs/generic-api), [Anthropic Claude](/docs/anthropic-api), and [OpenAI-compatible](/docs/openai-compatible-api) sub-pages, or copy the shapes directly.
+The package is built: its types are hand-ported from this repo's own `lib/public-api.ts` and kept in sync with it, with the same two runtime helpers described below already implemented. It just isn't on the npm registry yet, so `npm install aquilifer-types` doesn't work yet. Until it's published, hand-write your own types against [the page-facing API](/docs/api) and its [generic](/docs/generic-api), [Anthropic Claude](/docs/anthropic-api), and [OpenAI-compatible](/docs/openai-compatible-api) sub-pages, or read the real source directly from the repo linked above.
 
-## What it will ship
+## What it ships (once it's published)
 
 - The `window.aquilifer` type declaration itself, plus every type it depends on (across [the page-facing API](/docs/api) and its [generic](/docs/generic-api), [Anthropic Claude](/docs/anthropic-api), and [OpenAI-compatible](/docs/openai-compatible-api) sub-pages).
 - The provider-specific request/response/stream types, derived from the official `@anthropic-ai/sdk` and `openai` packages so they track each provider's own API shape rather than a hand-maintained copy.

@@ -1,6 +1,6 @@
 # The page-facing API
 
-This page is for developers integrating Aquilifer into a website's own frontend code. Everything here runs in the browser, in a page that a user has approved: there is no backend involved, and there's no npm package to install yet (see [aquilifer-types](/docs/aquilifer-types) for the plan). Until then, this page and its sub-pages are the reference for hand-writing your own types against the shapes they document.
+This page is for developers integrating Aquilifer into a website's own frontend code. Everything here runs in the browser, in a page that a user has approved: there is no backend involved, and there's no npm package to install yet (see [aquilifer-types](/docs/aquilifer-types), source already public, not yet on the registry). Until it's published, this page and its sub-pages are the reference for hand-writing your own types against the shapes they document.
 
 ## Before you start
 

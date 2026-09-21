@@ -19,7 +19,7 @@ Every project has tradeoffs. This page exists so they're written down plainly in
 
 - **Chrome (and other Chromium browsers) only, for now.** Aquilifer targets Manifest V3; Firefox, Safari, and other browsers aren't supported yet.
 - **Not on the Chrome Web Store yet**: install from source (see [Installing](/docs/installing)). Updates aren't automatic until it's published there.
-- **No npm package yet** for developers who want typed access to `window.aquilifer` without hand-writing the types themselves. See [aquilifer-types](/docs/aquilifer-types) for the plan, and [the page-facing API docs](/docs/api) for the current reference in the meantime.
+- **No npm package yet** for developers who want typed access to `window.aquilifer` without hand-writing the types themselves. The source is built and public at [github.com/On0n0k1/aquilifer-types](https://github.com/On0n0k1/aquilifer-types), just not published to the npm registry yet — see [aquilifer-types](/docs/aquilifer-types) for details, and [the page-facing API docs](/docs/api) for the current reference in the meantime.
 
 ## Found something not listed here?
 
