@@ -86,3 +86,60 @@ jobs:
       - run: npm run release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Builds docs/ (VitePress) and syncs the output into
+  # On0n0k1/On0n0k1.github.io's sites/projects/aquilifer/, served at
+  # on0n0k1.github.io/projects/aquilifer/. Same gate as `release` above
+  # (needs: test, real push to main only) — previously its own standalone
+  # workflow with no such gate, which meant a commit that failed lint/
+  # typecheck/tests would still get its docs deployed live; moved here so
+  # both release and deploy share the one gate instead of each having its
+  # own (or, before this, deploy having none at all).
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_NAME: aquilifer
+      BUILD_OUTPUT_DIR: docs/.vitepress/dist
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: docs/package-lock.json
+      - run: npm ci
+        working-directory: docs
+      - run: npm run build
+        working-directory: docs
+
+      - name: Clone On0n0k1.github.io
+        run: |
+          git clone --depth 1 https://x-access-token:${{ secrets.PAGES_DEPLOY_TOKEN }}@github.com/On0n0k1/On0n0k1.github.io.git "$RUNNER_TEMP/pages-repo"
+
+      - name: Sync built site into sites/projects/$PROJECT_NAME
+        run: |
+          PAGES_REPO="$RUNNER_TEMP/pages-repo"
+          rm -rf "$PAGES_REPO/sites/projects/$PROJECT_NAME"
+          mkdir -p "$PAGES_REPO/sites/projects/$PROJECT_NAME"
+          cp -r "$BUILD_OUTPUT_DIR"/. "$PAGES_REPO/sites/projects/$PROJECT_NAME/"
+
+      - name: Commit and push
+        run: |
+          cd "$RUNNER_TEMP/pages-repo"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --staged --quiet; then
+            echo "No changes to deploy."
+            exit 0
+          fi
+          git commit -m "deploy: sync $PROJECT_NAME from ${{ github.repository }}@${{ github.sha }}"
+          for i in 1 2 3 4 5; do
+            git push && exit 0
+            echo "Push rejected, retrying with rebase ($i)..."
+            git pull --rebase
+          done
+          echo "Push failed after retries" >&2
+          exit 1
