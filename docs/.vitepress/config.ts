@@ -11,6 +11,12 @@ export default defineConfig({
   // VitePress's own client-side route generation).
   base: '/projects/aquilifer/',
   cleanUrls: true,
+  // Git-based, per-page "Last updated" footer on every docs page — computed
+  // from that file's own commit history, not a hand-written date that goes
+  // stale the moment the page changes and nobody remembers to bump it.
+  // Needs full git history to compute correctly (see the deploy job's
+  // checkout step, which sets fetch-depth: 0 for exactly this).
+  lastUpdated: true,
   // Same icon renders as the extension's own manifest icons
   // (public/icon/ at the repo root) — copied into docs/public/icon/
   // rather than referenced across package boundaries, since this is a

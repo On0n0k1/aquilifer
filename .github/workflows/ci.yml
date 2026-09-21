@@ -104,6 +104,13 @@ jobs:
       BUILD_OUTPUT_DIR: docs/.vitepress/dist
     steps:
       - uses: actions/checkout@v4
+        with:
+          # VitePress's lastUpdated (docs/.vitepress/config.ts) computes each
+          # page's date from that file's own git history — needs the real
+          # history, not the default shallow clone (verified: a shallow
+          # clone silently omits lastUpdated from the build output
+          # entirely, rather than showing a wrong-but-present date).
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24

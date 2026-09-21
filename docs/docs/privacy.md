@@ -1,7 +1,5 @@
 # Privacy policy
 
-*Last updated: 2026-09-20.*
-
 This page describes what Aquilifer, the browser extension, does with your data. It's written in plain language on purpose; where a claim needs more detail, it links to the relevant feature page rather than repeating it here.
 
 ## The short version
