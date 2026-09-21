@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/On0n0k1/aquilifer/compare/v1.5.0...v1.6.0) (2026-09-21)
+
+
+### Features
+
+* **unlock:** apply the shared color theme to the vault unlock popup ([527073f](https://github.com/On0n0k1/aquilifer/commit/527073f4fc07d3bf0b67e263643e21f2127a2021))
+
 # [1.5.0](https://github.com/On0n0k1/aquilifer/compare/v1.4.0...v1.5.0) (2026-09-20)
 
 
