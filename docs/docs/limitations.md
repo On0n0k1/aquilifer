@@ -11,6 +11,7 @@ Every project has tradeoffs. This page exists so they're written down plainly in
 
 ## What Aquilifer doesn't do
 
+- **Requires a pay-per-token API key, not a consumer subscription.** Every [provider](/docs/providers) Aquilifer connects to is authenticated with that provider's own API key, billed per token used. A Claude Pro/Max subscription, a ChatGPT Plus subscription, or a GitHub Copilot subscription is a different product with a different authentication model (a logged-in session, not an API key) and can't be used here; connecting a provider means generating a key from that provider's own developer console, with its own separate, usage-based billing on top of (not instead of) any consumer subscription you already pay for.
 - **A site can never use two providers at once.** Exactly one provider is bound per site at a time; a provider-specific interface needing a different type triggers a switch (replacing the binding), never a second grant.
 - **The generic chat interface is text-in, text-out only**: no tool use, images, or structured output. A site needing those has to use the [Anthropic Claude](/docs/anthropic-api) or [OpenAI-compatible](/docs/openai-compatible-api) interface instead, and accept being tied to that provider's native request shape.
 - **No password/settings sync across devices.** Everything Aquilifer stores is local to one browser profile on one machine; connecting a provider on your laptop doesn't carry over to your desktop.
