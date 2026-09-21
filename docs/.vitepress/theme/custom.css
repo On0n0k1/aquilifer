@@ -94,3 +94,14 @@ body {
 .VPSidebar .item:has(.link.sidebar-scroll-active) > .indicator {
   background-color: var(--vp-c-brand-1);
 }
+
+/* The "Last updated" date now renders at the top of every page instead
+ * (theme/index.ts's doc-before slot + LastUpdatedTop.vue) — hide
+ * VitePress's own bottom copy rather than disabling lastUpdated at the
+ * config level, which would drop the underlying computed date the top
+ * copy reads too. .edit-info only ever holds .last-updated here (this
+ * theme has no editLink configured), so hiding the whole wrapper avoids
+ * leaving its own empty padding behind. */
+.VPDocFooter .edit-info {
+  display: none;
+}

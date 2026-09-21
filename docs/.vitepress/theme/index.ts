@@ -1,5 +1,7 @@
 import type { Theme } from 'vitepress';
 import DefaultTheme from 'vitepress/theme';
+import { h } from 'vue';
+import LastUpdatedTop from './LastUpdatedTop.vue';
 import { collapseInactiveSidebarGroups } from './sidebar-accordion';
 import { setupSidebarScrollSpy } from './sidebar-scroll-spy';
 import './custom.css';
@@ -22,6 +24,13 @@ function onRouteSettled() {
 
 export default {
   extends: DefaultTheme,
+  // Renders right before the page's own compiled markdown content (so
+  // above the H1, like a dateline above a headline) — the bottom copy
+  // VitePress renders by default is hidden via custom.css, not disabled
+  // at the config level, since disabling it there would drop the
+  // underlying computed date entirely, not just its default position.
+  Layout: () =>
+    h(DefaultTheme.Layout, null, { 'doc-before': () => h(LastUpdatedTop) }),
   enhanceApp({ router }) {
     if (typeof window === 'undefined') return;
     onRouteSettled();
