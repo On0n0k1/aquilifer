@@ -4,12 +4,12 @@ export default defineConfig({
   title: 'Aquilifer',
   description:
     'A browser extension that acts as a secure LLM provider for websites.',
-  // Served at on0n0k1.github.io/aquilifer/ (SPEC §18) — VitePress's own
-  // `base` is an absolute routing prefix, not a relative asset path, so
-  // this is set to the real subpath rather than a relative './' (which
-  // is the right call for a generic bundler, but breaks VitePress's own
-  // client-side route generation).
-  base: '/aquilifer/',
+  // Served at on0n0k1.github.io/projects/aquilifer/ (SPEC §18) —
+  // VitePress's own `base` is an absolute routing prefix, not a relative
+  // asset path, so this is set to the real subpath rather than a relative
+  // './' (which is the right call for a generic bundler, but breaks
+  // VitePress's own client-side route generation).
+  base: '/projects/aquilifer/',
   cleanUrls: true,
   // Same icon renders as the extension's own manifest icons
   // (public/icon/ at the repo root) — copied into docs/public/icon/
@@ -25,7 +25,7 @@ export default defineConfig({
         rel: 'icon',
         type: 'image/png',
         sizes: '32x32',
-        href: '/aquilifer/icon/32.png',
+        href: '/projects/aquilifer/icon/32.png',
       },
     ],
     [
@@ -34,7 +34,7 @@ export default defineConfig({
         rel: 'icon',
         type: 'image/png',
         sizes: '16x16',
-        href: '/aquilifer/icon/16.png',
+        href: '/projects/aquilifer/icon/16.png',
       },
     ],
   ],

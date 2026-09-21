@@ -41,9 +41,11 @@ jobs:
 # Real deploy steps, ready to swap in for the placeholder step above:
 #
 #     env:
-#       PROJECT_NAME: aquilifer         # URL segment: on0n0k1.github.io/<PROJECT_NAME>
-#       # Deliberately sites/$PROJECT_NAME, not the shared template's usual
-#       # sites/projects/$PROJECT_NAME default — Aquilifer's own decision.
+#       PROJECT_NAME: aquilifer         # URL segment: on0n0k1.github.io/projects/<PROJECT_NAME>
+#       # sites/projects/$PROJECT_NAME — the shared template's own default,
+#       # since several other projects live under sites/projects/ and
+#       # shouldn't mix with a one-off top-level directory (reversed from an
+#       # earlier deliberate deviation — see SPEC.md §18 for that history).
 #       BUILD_OUTPUT_DIR: docs/.vitepress/dist   # VitePress's default output, relative to repo root
 #     steps:
 #       - uses: actions/checkout@v4
@@ -61,12 +63,12 @@ jobs:
 #         run: |
 #           git clone --depth 1 https://x-access-token:${{ secrets.PAGES_DEPLOY_TOKEN }}@github.com/On0n0k1/On0n0k1.github.io.git "$RUNNER_TEMP/pages-repo"
 #
-#       - name: Sync built site into sites/$PROJECT_NAME
+#       - name: Sync built site into sites/projects/$PROJECT_NAME
 #         run: |
 #           PAGES_REPO="$RUNNER_TEMP/pages-repo"
-#           rm -rf "$PAGES_REPO/sites/$PROJECT_NAME"
-#           mkdir -p "$PAGES_REPO/sites/$PROJECT_NAME"
-#           cp -r "$BUILD_OUTPUT_DIR"/. "$PAGES_REPO/sites/$PROJECT_NAME/"
+#           rm -rf "$PAGES_REPO/sites/projects/$PROJECT_NAME"
+#           mkdir -p "$PAGES_REPO/sites/projects/$PROJECT_NAME"
+#           cp -r "$BUILD_OUTPUT_DIR"/. "$PAGES_REPO/sites/projects/$PROJECT_NAME/"
 #
 #       - name: Commit and push
 #         run: |
