@@ -5,10 +5,16 @@
 <h1 align="center">Aquilifer</h1>
 
 <p align="center">
+  <a href="https://chromewebstore.google.com/detail/aquilifer/aflcbgcgkaenbkecookfmndjgmgdancg">Add to Chrome</a> ·
   <a href="https://on0n0k1.github.io/projects/aquilifer/">Website</a> ·
   <a href="https://on0n0k1.github.io/projects/aquilifer/docs/">Docs</a> ·
   <a href="https://on0n0k1.github.io/projects/aquilifer/docs/installing">Install</a> ·
   <a href="https://on0n0k1.github.io/projects/aquilifer/docs/limitations">Limitations</a>
+</p>
+
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/aquilifer/aflcbgcgkaenbkecookfmndjgmgdancg"><img src="https://img.shields.io/chrome-web-store/v/aflcbgcgkaenbkecookfmndjgmgdancg?label=chrome%20web%20store" alt="Chrome Web Store version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="License: Apache-2.0"></a>
 </p>
 
 Aquilifer is a browser extension that acts as a secure LLM provider for websites: the same idea as MetaMask, but for LLM access instead of a crypto wallet.
@@ -17,7 +23,7 @@ A website never sees your API key. It asks the extension for a completion; the e
 
 ## Status
 
-Early / pre-release. Actively developed, not yet published to the Chrome Web Store; install from source for now (below). The [docs site](https://on0n0k1.github.io/projects/aquilifer/) is live and reflects what's actually implemented; see its [limitations page](https://on0n0k1.github.io/projects/aquilifer/docs/limitations) for an honest look at what isn't yet.
+Released and actively developed: Aquilifer is [on the Chrome Web Store](https://chromewebstore.google.com/detail/aquilifer/aflcbgcgkaenbkecookfmndjgmgdancg). Being shipped doesn't mean feature-complete — the [docs site](https://on0n0k1.github.io/projects/aquilifer/) reflects what's actually implemented, and its [limitations page](https://on0n0k1.github.io/projects/aquilifer/docs/limitations) is an honest look at what isn't yet.
 
 ## What developers get
 
@@ -55,7 +61,15 @@ if (window.aquilifer) {
 
 For TypeScript, [`aquilifer-types`](https://github.com/On0n0k1/aquilifer-types) (`npm install aquilifer-types`) ships typed access to `window.aquilifer`, no hand-copying shapes from the docs.
 
-## Installing from source
+## Installing
+
+**[Add Aquilifer to Chrome](https://chromewebstore.google.com/detail/aquilifer/aflcbgcgkaenbkecookfmndjgmgdancg)** — the recommended path, and it auto-updates.
+
+Chromium-based browsers only for now (Chrome, Edge, Brave); Firefox and Safari aren't supported yet. Full walkthrough, including what the install-time permission warning is asking for: [the installing docs](https://on0n0k1.github.io/projects/aquilifer/docs/installing).
+
+### From source
+
+For developing Aquilifer or running an unreleased change. Chrome treats a source install and a store install as two separate extensions, so don't run both at once.
 
 ```sh
 git clone https://github.com/On0n0k1/aquilifer.git
