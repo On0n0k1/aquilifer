@@ -19,7 +19,6 @@ Every project has tradeoffs. This page exists so they're written down plainly in
 ## Platform & maturity
 
 - **Chrome (and other Chromium browsers) only, for now.** Aquilifer targets Manifest V3; Firefox, Safari, and other browsers aren't supported yet.
-- **Not on the Chrome Web Store yet**: install from source (see [Installing](/docs/installing)). Updates aren't automatic until it's published there.
 
 ## Found something not listed here?
 

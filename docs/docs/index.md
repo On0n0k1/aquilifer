@@ -14,7 +14,7 @@ However this project grows, these stay true: they're the entire point of it, not
 
 ## What's on this page vs. the rest of the docs
 
-- **[Installing](/docs/installing)**: how to get it running today (it isn't on the Chrome Web Store yet).
+- **[Installing](/docs/installing)**: installing from the Chrome Web Store, and building from source if you're contributing.
 - **[Connecting a site](/docs/connecting)**: the approval flow, and what "connect once, then silent" actually means.
 - **[Providers](/docs/providers)**: Anthropic, OpenAI, and self-hosted/local models.
 - **[The toolbar popup](/docs/popup)**: the quick-glance view: what's connected, live rate-limit standing, switching models and the default provider.

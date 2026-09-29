@@ -10,6 +10,9 @@ hero:
     alt: Aquilifer, a golden eagle standard
   actions:
     - theme: brand
+      text: Add to Chrome
+      link: https://chromewebstore.google.com/detail/aquilifer/aflcbgcgkaenbkecookfmndjgmgdancg
+    - theme: alt
       text: Get started
       link: /docs/
     - theme: alt
@@ -27,7 +30,7 @@ features:
 
 ## How it works
 
-1. **A user installs Aquilifer** and connects whichever LLM provider they want to use: an Anthropic API key, an OpenAI key, or a self-hosted endpoint like a local llama.cpp server. The credential is stored in the extension, nowhere else.
+1. **A user installs Aquilifer** from the [Chrome Web Store](https://chromewebstore.google.com/detail/aquilifer/aflcbgcgkaenbkecookfmndjgmgdancg) and connects whichever LLM provider they want to use: an Anthropic API key, an OpenAI key, or a self-hosted endpoint like a local llama.cpp server. The credential is stored in the extension, nowhere else.
 2. **A website asks for access** through `window.aquilifer`. The first time, Aquilifer shows a plain-language approval prompt naming the site; the user approves or denies it.
 3. **Once approved, the site can request completions**, never the credential itself, never a way to change which provider answers. The user chose that when they connected it, and can revoke access at any time.
 
@@ -52,4 +55,4 @@ The usual way a website offers "AI features" is to run its own backend, hold an 
 
 A site that wants this as a genuine fallback (its own integration first, Aquilifer only if that's unavailable) can do that too, without ever risking the user's spend limits or credentials.
 
-Aquilifer is under active development; see the [docs](/docs/) for what's implemented today, and the [limitations page](/docs/limitations) for an honest look at what isn't yet.
+Aquilifer is [available on the Chrome Web Store](https://chromewebstore.google.com/detail/aquilifer/aflcbgcgkaenbkecookfmndjgmgdancg) and under active development; see the [docs](/docs/) for what's implemented today, and the [limitations page](/docs/limitations) for an honest look at what isn't yet.

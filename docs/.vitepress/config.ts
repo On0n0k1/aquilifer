@@ -84,14 +84,17 @@ export default defineConfig({
               collapsed: true,
               items: [
                 { text: 'Requirements', link: '/docs/installing#requirements' },
-                { text: 'Build it', link: '/docs/installing#build-it' },
                 {
-                  text: 'Load it into your browser',
-                  link: '/docs/installing#load-it-into-your-browser',
+                  text: 'Install from the Chrome Web Store',
+                  link: '/docs/installing#install-from-the-chrome-web-store',
                 },
                 {
                   text: 'Staying up to date',
                   link: '/docs/installing#staying-up-to-date',
+                },
+                {
+                  text: 'Installing from source',
+                  link: '/docs/installing#installing-from-source',
                 },
               ],
             },
