@@ -22,6 +22,10 @@ Its types are hand-ported from this repo's own `lib/public-api.ts` and kept in s
 - A fallback-pattern helper (see [Using Aquilifer as a fallback](/docs/api#using-aquilifer-as-a-fallback)). Nobody's built a real fallback integration against Aquilifer yet, and this needs real usage to design against rather than guessing upfront and risking a breaking change later.
 - Any backend or server code. `window.aquilifer` only exists inside a browser tab with the extension installed, so a package aimed at server code would be solving a problem that doesn't exist here.
 
-## Package name status
+## Which package to install
 
-`aquilifer-types` is confirmed available and reserved specifically for this package. A separate placeholder package, `aquilifer` (no `-types` suffix), is already published as a minimal stub purely to hold that bare name against squatting; it isn't this package, and isn't meant to be installed.
+**[`aquilifer-types`](https://www.npmjs.com/package/aquilifer-types)** — published on npm, and the one this page documents.
+
+There is also a package published under the bare name **`aquilifer`**, with no `-types` suffix. **That one is not this package and isn't meant to be installed**: it's a minimal stub holding the name against squatting, with no types and no code in it. npm has no way to reserve a name without publishing something under it, which is the only reason it exists.
+
+The extension itself isn't on npm under either name — it ships through [the Chrome Web Store](https://chromewebstore.google.com/detail/aquilifer/aflcbgcgkaenbkecookfmndjgmgdancg). Installing `aquilifer-types` gives a site's own code the types for `window.aquilifer`; it neither installs the extension nor requires visitors to have it.

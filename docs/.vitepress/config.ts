@@ -339,8 +339,8 @@ export default defineConfig({
                   link: '/docs/aquilifer-types#what-it-won-t-ship-yet',
                 },
                 {
-                  text: 'Package name status',
-                  link: '/docs/aquilifer-types#package-name-status',
+                  text: 'Which package to install',
+                  link: '/docs/aquilifer-types#which-package-to-install',
                 },
               ],
             },
