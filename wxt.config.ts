@@ -4,6 +4,14 @@ import { defineConfig } from 'wxt';
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: {
+    // Rendered as a clickable link on the extension's chrome://extensions
+    // details page — without it, someone who installed from the Web Store
+    // has no in-browser route back to the documentation. Deliberately the
+    // docs site rather than the Store listing (linking the Store from
+    // inside a Store-installed item is circular) and not the GitHub repo
+    // (the audience here is a user looking for how it works, not a
+    // contributor looking for source).
+    homepage_url: 'https://on0n0k1.github.io/projects/aquilifer/',
     // activeTab (SPEC — visual design): the toolbar popup shows the current
     // tab's connection/rate-limit status, which needs that tab's URL. Not
     // the broader `tabs` permission — activeTab only grants that access for
